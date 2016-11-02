@@ -338,3 +338,76 @@ func (p *PackinglistItem) Delete() error {
 	_, err := db.Exec("Delete from PackinglistItem Where PackinglistID = ?, StoreitemID = ?", p.PackinglistID, p.StoreitemID)
 	return err
 }
+
+type Participiant struct {
+	UserID    int
+	EventID   int
+	Arrival   time.Time
+	Departure time.Time
+}
+
+func (p *Participiant) Insert() error {
+	_, err := db.Exec("Insert Into Participiant (UserID, EventID, Arrival, Departure) Values (?, ?, ?, ?)", p.UserID, p.EventID)
+	return err
+}
+
+func (p *Participiant) Update() error {
+	_, err := db.Exec("Update Participiant SET UserID = ?, EventID = ?, Arrival = ?, Departure = ? where UserID = ?, EventID = ?", p.UserID, p.EventID, p.Arrival, p.Departure, p.UserID, p.EventID)
+	return err
+}
+
+func (p *Participiant) Delete() error {
+	_, err := db.Exec("Delete from PackinglistItem Where UserID = ?, EventID = ?", p.UserID, p.EventID)
+	return err
+}
+
+type Wishlist struct {
+	ID   int
+	Name string
+}
+
+func (w *Wishlist) Insert() error {
+	res, err := db.Exec("Insert Into Wishlist (Name) Values (?)", w.Name)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	w.ID = int(id)
+	return nil
+}
+
+func (w *Wishlist) Update() error {
+	_, err := db.Exec("Update Wishlist SET name = ? where ID = ?", w.Name, w.ID)
+	return err
+}
+
+func (w *Wishlist) Delete() error {
+	_, err := db.Exec("Delete from Wishlist Where ID = ?", w.ID)
+	return err
+}
+
+type Wishlistitem struct {
+	WishlistID  int
+	EquipmentID int
+	Count       int
+}
+
+func (p *Wishlistitem) Insert() error {
+	_, err := db.Exec("Insert Into Wishlistitem (WishlistID, EquipmentID) Values (?, ?)", p.WishlistID, p.EquipmentID)
+	return err
+}
+
+func (p *Wishlistitem) Update() error {
+	_, err := db.Exec("Update Wishlistitem SET WishlistID = ?, EquipmentID = ? where WishlistID = ?, EquipmentID = ?", p.WishlistID, p.EquipmentID, p.WishlistID, p.EquipmentID)
+	return err
+}
+
+func (p *Wishlistitem) Delete() error {
+	_, err := db.Exec("Delete from Wishlistitem Where WishlistID = ?, EquipmentID = ?", p.WishlistID, p.EquipmentID)
+	return err
+}
