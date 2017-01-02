@@ -37,7 +37,7 @@ func generateNewToken(un db100.User) (string, error) {
 	// Set some claims
 	token.Claims["iss"] = "funkloch"
 	token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-	token.Claims["user"] = un.User_ID
+	token.Claims["user"] = un.ID
 	token.Claims["rights"] = un.Right
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString([]byte(mySigningKey))
@@ -84,7 +84,7 @@ func getUserfromToken(token *jwt.Token) (db100.User, error) {
 	}
 
 	uid := int(ui)
-	un.User_ID = uid
+	un.ID = uid
 	un.GetDetails()
 
 	return un, nil

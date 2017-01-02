@@ -177,6 +177,11 @@ func (s *Store) Insert() error {
 	return nil
 }
 
+func (s *Store) GetDetails() error {
+	err := db.Get(s, "SELECT * from Store Where ID = ? Limit 1", s.ID)
+	return err
+}
+
 func (s *Store) GetManager() (User, error) {
 	var u User
 	u.ID = s.ID
@@ -192,6 +197,12 @@ func (s *Store) Update() error {
 func (s *Store) Delete() error {
 	_, err := db.Exec("Delete from Store Where ID = ?", s.ID)
 	return err
+}
+
+func (s *Store) GetStoreitems() ([]StoreItem, error) {
+	var si []StoreItem
+	err := db.Select(&si, "Select * from StoreItem Where StoreID = ?", s.ID)
+	return si, err
 }
 
 type Equipment struct {
@@ -286,6 +297,12 @@ func (e *Event) Update() error {
 func (e *Event) Delete() error {
 	_, err := db.Exec("Delete from Event Where ID = ?", e.ID)
 	return err
+}
+
+func (e *Event) GetParticipiants() ([]Participiant, error) {
+	var pp []Participiant
+	err := db.Select(&pp, "Select * from Participiant Where EventID = ?", e.ID)
+	return pp, err
 }
 
 type Packinglist struct {
