@@ -221,3 +221,34 @@ func getStoreItemCountHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(j)
 }
+
+func insertNewItem(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	decoder := json.NewDecoder(r.Body)
+	var si db100.StoreItem
+	err = decoder.Decode(&si)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		return
+	}
+	si.StoreID = id
+	err = si.Insert()
+	if err != nil {
+		apierror(w, r, "Error while inserting Storeitem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	j, err := json.Marshal(&si)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
+}
