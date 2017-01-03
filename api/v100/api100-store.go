@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"strconv"
+
 	"github.com/chaosvermittlung/funkloch-server/db/v100"
+	"github.com/gorilla/mux"
 )
 
 func postStoreHandler(w http.ResponseWriter, r *http.Request) {
@@ -36,13 +39,14 @@ func postStoreHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStoreHandler(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	var s db100.Store
-	err := decoder.Decode(&s)
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
 	if err != nil {
-		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
+	s := db100.Store{ID: id}
 	err = s.GetDetails()
 	if err != nil {
 		apierror(w, r, "Error fetching Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
@@ -59,13 +63,14 @@ func getStoreHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStoreManager(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	var s db100.Store
-	err := decoder.Decode(&s)
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
 	if err != nil {
-		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
+	s := db100.Store{ID: id}
 	u, err := s.GetManager()
 	if err != nil {
 		apierror(w, r, "Error fetching Store Manager: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
@@ -87,9 +92,17 @@ func updateStoreHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
 		return
 	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	s := db100.Store{ID: id}
 	decoder := json.NewDecoder(r.Body)
-	var s db100.Store
-	err = decoder.Decode(&s)
+	var st db100.Store
+	err = decoder.Decode(&st)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
 		return
@@ -127,30 +140,23 @@ func deleteStoreHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error deleting Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	j, err := json.Marshal(&s)
-	if err != nil {
-		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(j)
 }
 
 func getStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-	var s db100.Store
-	err := decoder.Decode(&s)
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
 	if err != nil {
-		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
-	i, err := s.GetStoreitems()
+	s := db100.Store{ID: id}
+	ii, err := s.GetStoreitems()
 	if err != nil {
 		apierror(w, r, "Error fetching Store Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	j, err := json.Marshal(&i)
+	j, err := json.Marshal(&ii)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
 		return
