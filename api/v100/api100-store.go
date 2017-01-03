@@ -157,7 +157,7 @@ func getStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res []db100.Equipment
+	var result []db100.Equipment
 
 	for _, si := range ii {
 		e := db100.Equipment{ID: si.EquipmentID}
@@ -167,10 +167,52 @@ func getStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		e.ID = si.ID
-		res = append(res, e)
+		result = append(result, e)
 	}
 
-	j, err := json.Marshal(&res)
+	j, err := json.Marshal(&result)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
+}
+
+func getStoreItemCountHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	s := db100.Store{ID: id}
+	ii, err := s.GetStoreitems()
+	if err != nil {
+		apierror(w, r, "Error fetching Store Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	m := make(map[int]int)
+
+	for _, si := range ii {
+		m[si.EquipmentID] = m[si.EquipmentID] + 1
+	}
+
+	var result []storeItemCountResponse
+	for eid, ecount := range m {
+		e := db100.Equipment{ID: eid}
+		err := e.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching Item Details: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		stcr := storeItemCountResponse{Name: e.Name, Count: ecount}
+		result = append(result, stcr)
+	}
+
+	j, err := json.Marshal(&result)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
 		return
