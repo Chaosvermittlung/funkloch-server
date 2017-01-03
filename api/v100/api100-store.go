@@ -156,7 +156,21 @@ func getStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error fetching Store Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	j, err := json.Marshal(&ii)
+
+	var res []db100.Equipment
+
+	for _, si := range ii {
+		e := db100.Equipment{ID: si.EquipmentID}
+		err := e.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching Item Details: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		e.ID = si.ID
+		res = append(res, e)
+	}
+
+	j, err := json.Marshal(&res)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
 		return

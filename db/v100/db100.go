@@ -225,6 +225,11 @@ func (e *Equipment) Insert() error {
 	return nil
 }
 
+func (e *Equipment) GetDetails() error {
+	err := db.Get(e, "SELECT * from Equipment Where ID = ? Limit 1", e.ID)
+	return err
+}
+
 func (e *Equipment) Update() error {
 	_, err := db.Exec("Update Equipment SET name = ? where ID = ?", e.Name, e.ID)
 	return err
