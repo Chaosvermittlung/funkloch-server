@@ -65,7 +65,7 @@ func patchCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ou.ID != u.ID {
+	if ou.UserID != u.UserID {
 		apierror(w, r, "User not permitted for this Action", http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
 		return
 	}
@@ -159,7 +159,7 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if (ou.ID != u.ID) && (ou.Right != db100.USERRIGHT_ADMIN) {
+	if (ou.UserID != u.UserID) && (ou.Right != db100.USERRIGHT_ADMIN) {
 		apierror(w, r, "User not permitted for this Action", http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
 		return
 	}
@@ -253,7 +253,7 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	err = db100.DeleteUser(u.ID)
+	err = db100.DeleteUser(u.UserID)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return

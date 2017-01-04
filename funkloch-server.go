@@ -1,11 +1,15 @@
 package main
 
 import (
-	"github.com/chaosvermittlung/funkloch-server/api/v100"
+	"log"
+	"net/http"
+	"strconv"
 
 	"github.com/chaosvermittlung/funkloch-server/api/global"
+	"github.com/chaosvermittlung/funkloch-server/api/v100"
 	"github.com/chaosvermittlung/funkloch-server/db/v100"
 	"github.com/chaosvermittlung/funkloch-server/global"
+
 	"github.com/gorilla/mux"
 )
 
@@ -19,4 +23,8 @@ func main() {
 	//1.0.0 Api Version
 	a100 := api100.GetSubrouter("/api/v100")
 	apig.PathPrefix("/v100").Handler(a100)
+
+	log.Println("funkloch Server Running")
+	port := ":" + strconv.Itoa(global.Conf.Port)
+	log.Fatal(http.ListenAndServe(port, r))
 }

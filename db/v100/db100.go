@@ -8,6 +8,7 @@ import (
 
 	"github.com/chaosvermittlung/funkloch-server/global"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sqlx.DB
@@ -74,7 +75,7 @@ const (
 )
 
 type User struct {
-	ID       int       `json:"id"`
+	UserID   int       `json:"id"`
 	Username string    `json:"username"`
 	Password string    `json:"password"`
 	Salt     string    `json:"-"`
@@ -109,7 +110,7 @@ func (u *User) GetDetailstoUsername() error {
 }
 
 func (u *User) GetDetails() error {
-	err := db.Get(u, "SELECT * from User Where ID = ? Limit 1", u.ID)
+	err := db.Get(u, "SELECT * from User Where ID = ? Limit 1", u.UserID)
 	return err
 }
 
@@ -130,7 +131,7 @@ func (u *User) Patch(ou User) error {
 }
 
 func (u *User) Update() error {
-	_, err := db.Exec("UPDATE User SET username = ?, password = ?, email = ?, right = ? WHERE id = ?", u.Username, u.Password, u.Email, u.Right, u.ID)
+	_, err := db.Exec("UPDATE User SET username = ?, password = ?, email = ?, right = ? WHERE id = ?", u.Username, u.Password, u.Email, u.Right, u.UserID)
 	return err
 }
 
@@ -145,7 +146,7 @@ func (u *User) Insert() error {
 		log.Println(err)
 		return err
 	}
-	u.ID = int(id)
+	u.UserID = int(id)
 
 	return nil
 }
@@ -156,7 +157,7 @@ func DeleteUser(id int) error {
 }
 
 type Store struct {
-	ID      int
+	StoreID int
 	Name    string
 	Adress  string
 	Manager int
@@ -173,41 +174,47 @@ func (s *Store) Insert() error {
 		log.Println(err)
 		return err
 	}
-	s.ID = int(id)
+	s.StoreID = int(id)
 	return nil
 }
 
+func GetStores() ([]Store, error) {
+	var s []Store
+	err := db.Select(&s, "Select * from Store")
+	return s, err
+}
+
 func (s *Store) GetDetails() error {
-	err := db.Get(s, "SELECT * from Store Where ID = ? Limit 1", s.ID)
+	err := db.Get(s, "SELECT * from Store Where ID = ? Limit 1", s.StoreID)
 	return err
 }
 
 func (s *Store) GetManager() (User, error) {
 	var u User
-	u.ID = s.ID
+	u.UserID = s.Manager
 	err := u.GetDetails()
 	return u, err
 }
 
 func (s *Store) Update() error {
-	_, err := db.Exec("Update Store SET name = ?, adress = ?, manager = ? where ID = ?", s.Name, s.Adress, s.Manager, s.ID)
+	_, err := db.Exec("Update Store SET name = ?, adress = ?, manager = ? where ID = ?", s.Name, s.Adress, s.Manager, s.StoreID)
 	return err
 }
 
 func (s *Store) Delete() error {
-	_, err := db.Exec("Delete from Store Where ID = ?", s.ID)
+	_, err := db.Exec("Delete from Store Where ID = ?", s.StoreID)
 	return err
 }
 
 func (s *Store) GetStoreitems() ([]StoreItem, error) {
 	var si []StoreItem
-	err := db.Select(&si, "Select * from StoreItem Where StoreID = ?", s.ID)
+	err := db.Select(&si, "Select * from StoreItem Where StoreID = ?", s.StoreID)
 	return si, err
 }
 
 type Equipment struct {
-	ID   int
-	Name string
+	EquipmentID int
+	Name        string
 }
 
 func (e *Equipment) Insert() error {
@@ -221,27 +228,27 @@ func (e *Equipment) Insert() error {
 		log.Println(err)
 		return err
 	}
-	e.ID = int(id)
+	e.EquipmentID = int(id)
 	return nil
 }
 
 func (e *Equipment) GetDetails() error {
-	err := db.Get(e, "SELECT * from Equipment Where ID = ? Limit 1", e.ID)
+	err := db.Get(e, "SELECT * from Equipment Where ID = ? Limit 1", e.EquipmentID)
 	return err
 }
 
 func (e *Equipment) Update() error {
-	_, err := db.Exec("Update Equipment SET name = ? where ID = ?", e.Name, e.ID)
+	_, err := db.Exec("Update Equipment SET name = ? where ID = ?", e.Name, e.EquipmentID)
 	return err
 }
 
 func (e *Equipment) Delete() error {
-	_, err := db.Exec("Delete from Equipment Where ID = ?", e.ID)
+	_, err := db.Exec("Delete from Equipment Where ID = ?", e.EquipmentID)
 	return err
 }
 
 type StoreItem struct {
-	ID          int
+	StoreItemID int
 	StoreID     int
 	EquipmentID int
 }
@@ -257,26 +264,26 @@ func (s *StoreItem) Insert() error {
 		log.Println(err)
 		return err
 	}
-	s.ID = int(id)
+	s.StoreItemID = int(id)
 	return nil
 }
 
 func (s *StoreItem) Update() error {
-	_, err := db.Exec("Update StoreItem SET StoreID = ? where ID = ?", s.StoreID, s.ID)
+	_, err := db.Exec("Update StoreItem SET StoreID = ? where ID = ?", s.StoreID, s.StoreItemID)
 	return err
 }
 
 func (s *StoreItem) Delete() error {
-	_, err := db.Exec("Delete from Equipment Where ID = ?", s.ID)
+	_, err := db.Exec("Delete from Equipment Where ID = ?", s.StoreItemID)
 	return err
 }
 
 type Event struct {
-	ID     int
-	Name   string
-	Start  time.Time
-	End    time.Time
-	Adress string
+	EventID int
+	Name    string
+	Start   time.Time
+	End     time.Time
+	Adress  string
 }
 
 func (e *Event) Insert() error {
@@ -290,30 +297,30 @@ func (e *Event) Insert() error {
 		log.Println(err)
 		return err
 	}
-	e.ID = int(id)
+	e.EventID = int(id)
 	return nil
 }
 
 func (e *Event) Update() error {
-	_, err := db.Exec("Update Equipment SET Name = ?, Start = ?, End = ?, Adress = ? where ID = ?", e.Name, e.Start, e.End, e.Adress, e.ID)
+	_, err := db.Exec("Update Equipment SET Name = ?, Start = ?, End = ?, Adress = ? where ID = ?", e.Name, e.Start, e.End, e.Adress, e.EventID)
 	return err
 }
 
 func (e *Event) Delete() error {
-	_, err := db.Exec("Delete from Event Where ID = ?", e.ID)
+	_, err := db.Exec("Delete from Event Where ID = ?", e.EventID)
 	return err
 }
 
 func (e *Event) GetParticipiants() ([]Participiant, error) {
 	var pp []Participiant
-	err := db.Select(&pp, "Select * from Participiant Where EventID = ?", e.ID)
+	err := db.Select(&pp, "Select * from Participiant Where EventID = ?", e.EventID)
 	return pp, err
 }
 
 type Packinglist struct {
-	ID      int
-	Name    string
-	EventID int
+	PackinglistID int
+	Name          string
+	EventID       int
 }
 
 func (p *Packinglist) Insert() error {
@@ -327,17 +334,17 @@ func (p *Packinglist) Insert() error {
 		log.Println(err)
 		return err
 	}
-	p.ID = int(id)
+	p.PackinglistID = int(id)
 	return nil
 }
 
 func (p *Packinglist) Update() error {
-	_, err := db.Exec("Update Packinglist SET name = ?, EventID = ? where ID = ?", p.Name, p.EventID, p.ID)
+	_, err := db.Exec("Update Packinglist SET name = ?, EventID = ? where ID = ?", p.Name, p.EventID, p.PackinglistID)
 	return err
 }
 
 func (p *Packinglist) Delete() error {
-	_, err := db.Exec("Delete from Packinglist Where ID = ?", p.ID)
+	_, err := db.Exec("Delete from Packinglist Where ID = ?", p.PackinglistID)
 	return err
 }
 
@@ -384,8 +391,8 @@ func (p *Participiant) Delete() error {
 }
 
 type Wishlist struct {
-	ID   int
-	Name string
+	WishlistID int
+	Name       string
 }
 
 func (w *Wishlist) Insert() error {
@@ -399,17 +406,17 @@ func (w *Wishlist) Insert() error {
 		log.Println(err)
 		return err
 	}
-	w.ID = int(id)
+	w.WishlistID = int(id)
 	return nil
 }
 
 func (w *Wishlist) Update() error {
-	_, err := db.Exec("Update Wishlist SET name = ? where ID = ?", w.Name, w.ID)
+	_, err := db.Exec("Update Wishlist SET name = ? where ID = ?", w.Name, w.WishlistID)
 	return err
 }
 
 func (w *Wishlist) Delete() error {
-	_, err := db.Exec("Delete from Wishlist Where ID = ?", w.ID)
+	_, err := db.Exec("Delete from Wishlist Where ID = ?", w.WishlistID)
 	return err
 }
 

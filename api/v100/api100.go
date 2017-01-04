@@ -27,6 +27,8 @@ func GetSubrouter(prefix string) *interpose.Middleware {
 	a100 = a100.StrictSlash(true)
 	a100user := getUserRouter(prefix + "/user")
 	a100.PathPrefix("/user").Handler(a100user)
+	a100store := getStoreRouter(prefix + "/store")
+	a100.PathPrefix("/store").Handler(a100store)
 
 	middle100.UseHandler(a100)
 	return middle100
@@ -37,7 +39,7 @@ func generateNewToken(un db100.User) (string, error) {
 	// Set some claims
 	token.Claims["iss"] = "funkloch"
 	token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-	token.Claims["user"] = un.ID
+	token.Claims["user"] = un.UserID
 	token.Claims["rights"] = un.Right
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString([]byte(mySigningKey))
@@ -84,7 +86,7 @@ func getUserfromToken(token *jwt.Token) (db100.User, error) {
 	}
 
 	uid := int(ui)
-	un.ID = uid
+	un.UserID = uid
 	un.GetDetails()
 
 	return un, nil
@@ -93,7 +95,7 @@ func getUserfromToken(token *jwt.Token) (db100.User, error) {
 func GetNewSubrouter(prefix string) (*mux.Router, *interpose.Middleware) {
 	m := interpose.New()
 	//	m.Use(apiglobal.LoggerMiddleware())
-	m.Use(authMiddleware())
+	//m.Use(authMiddleware())
 
 	r := mux.NewRouter().PathPrefix(prefix).Subrouter()
 	r = r.StrictSlash(true)
