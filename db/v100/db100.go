@@ -212,6 +212,12 @@ func (s *Store) GetStoreitems() ([]StoreItem, error) {
 	return si, err
 }
 
+func (s *Store) GetItemCount(id int) (int, error) {
+	var i int
+	err := db.Get(&i, "Select Count(*) from StoreItem Where StoreID = ? and EquipmentID = ?", s.StoreID, id)
+	return i, err
+}
+
 type Equipment struct {
 	EquipmentID int
 	Name        string
@@ -230,6 +236,12 @@ func (e *Equipment) Insert() error {
 	}
 	e.EquipmentID = int(id)
 	return nil
+}
+
+func GetEquipment() ([]Equipment, error) {
+	var e []Equipment
+	err := db.Select(&e, "Select * from Store")
+	return e, err
 }
 
 func (e *Equipment) GetDetails() error {
