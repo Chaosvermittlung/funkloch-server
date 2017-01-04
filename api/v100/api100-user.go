@@ -180,6 +180,9 @@ func listUsersHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
+	for i := range uu {
+		uu[i].Password = ""
+	}
 	j, err := json.Marshal(&uu)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
