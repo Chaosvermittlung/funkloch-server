@@ -14,11 +14,11 @@ func getEventRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
 	r.HandleFunc("/", postEventHandler).Methods("POST")
 	r.HandleFunc("/list", listEventsHandler).Methods("GET")
+	r.HandleFunc("/next", getNextEventHandler).Methods("GET")
 	r.HandleFunc("/{ID}", getEventHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchEventHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteEventHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/Participiants", getEventParticipiantsHandler).Methods("GET")
-	r.HandleFunc("/Next", getNextEventHandler).Methods("GET")
 
 	return m
 }

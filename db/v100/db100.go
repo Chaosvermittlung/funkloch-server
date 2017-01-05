@@ -342,7 +342,7 @@ func GetEvents() ([]Event, error) {
 
 func GetNextEvent() (Event, error) {
 	var e Event
-	err := db.Get(&e, "Select * from Event where start > ? Limit 1 order by start ASC")
+	err := db.Get(&e, "Select * from Event where start > ? Order by start ASC Limit 1", time.Now())
 	return e, err
 }
 
