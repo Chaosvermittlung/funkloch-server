@@ -340,6 +340,12 @@ func GetEvents() ([]Event, error) {
 	return e, err
 }
 
+func GetNextEvent() (Event, error) {
+	var e Event
+	err := db.Get(&e, "Select * from Event where start > ? Limit 1 order by start ASC")
+	return e, err
+}
+
 type Packinglist struct {
 	PackinglistID int
 	Name          string
