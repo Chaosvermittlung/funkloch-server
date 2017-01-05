@@ -110,7 +110,7 @@ func (u *User) GetDetailstoUsername() error {
 }
 
 func (u *User) GetDetails() error {
-	err := db.Get(u, "SELECT * from User Where ID = ? Limit 1", u.UserID)
+	err := db.Get(u, "SELECT * from User Where UserID = ? Limit 1", u.UserID)
 	return err
 }
 
@@ -131,7 +131,7 @@ func (u *User) Patch(ou User) error {
 }
 
 func (u *User) Update() error {
-	_, err := db.Exec("UPDATE User SET username = ?, password = ?, email = ?, right = ? WHERE id = ?", u.Username, u.Password, u.Email, u.Right, u.UserID)
+	_, err := db.Exec("UPDATE User SET username = ?, password = ?, email = ?, right = ? WHERE Userid = ?", u.Username, u.Password, u.Email, u.Right, u.UserID)
 	return err
 }
 
@@ -152,7 +152,7 @@ func (u *User) Insert() error {
 }
 
 func DeleteUser(id int) error {
-	_, err := db.Exec("DELETE FROM User Where ID = ?", id)
+	_, err := db.Exec("DELETE FROM User Where UserID = ?", id)
 	return err
 }
 
@@ -185,7 +185,7 @@ func GetStores() ([]Store, error) {
 }
 
 func (s *Store) GetDetails() error {
-	err := db.Get(s, "SELECT * from Store Where ID = ? Limit 1", s.StoreID)
+	err := db.Get(s, "SELECT * from Store Where StoreID = ? Limit 1", s.StoreID)
 	return err
 }
 
@@ -197,12 +197,12 @@ func (s *Store) GetManager() (User, error) {
 }
 
 func (s *Store) Update() error {
-	_, err := db.Exec("Update Store SET name = ?, adress = ?, manager = ? where ID = ?", s.Name, s.Adress, s.Manager, s.StoreID)
+	_, err := db.Exec("Update Store SET name = ?, adress = ?, manager = ? where StoreID = ?", s.Name, s.Adress, s.Manager, s.StoreID)
 	return err
 }
 
 func (s *Store) Delete() error {
-	_, err := db.Exec("Delete from Store Where ID = ?", s.StoreID)
+	_, err := db.Exec("Delete from Store Where StoreID = ?", s.StoreID)
 	return err
 }
 
@@ -240,22 +240,22 @@ func (e *Equipment) Insert() error {
 
 func GetEquipment() ([]Equipment, error) {
 	var e []Equipment
-	err := db.Select(&e, "Select * from Store")
+	err := db.Select(&e, "Select * from Equipment")
 	return e, err
 }
 
 func (e *Equipment) GetDetails() error {
-	err := db.Get(e, "SELECT * from Equipment Where ID = ? Limit 1", e.EquipmentID)
+	err := db.Get(e, "SELECT * from Equipment Where EquipmentID = ? Limit 1", e.EquipmentID)
 	return err
 }
 
 func (e *Equipment) Update() error {
-	_, err := db.Exec("Update Equipment SET name = ? where ID = ?", e.Name, e.EquipmentID)
+	_, err := db.Exec("Update Equipment SET name = ? where EquipmentID = ?", e.Name, e.EquipmentID)
 	return err
 }
 
 func (e *Equipment) Delete() error {
-	_, err := db.Exec("Delete from Equipment Where ID = ?", e.EquipmentID)
+	_, err := db.Exec("Delete from Equipment Where EquipmentID = ?", e.EquipmentID)
 	return err
 }
 
@@ -286,7 +286,7 @@ func (s *StoreItem) Update() error {
 }
 
 func (s *StoreItem) Delete() error {
-	_, err := db.Exec("Delete from Equipment Where ID = ?", s.StoreItemID)
+	_, err := db.Exec("Delete from StoreItem Where StoreItemID = ?", s.StoreItemID)
 	return err
 }
 
@@ -313,8 +313,13 @@ func (e *Event) Insert() error {
 	return nil
 }
 
+func (e *Event) GetDetails() error {
+	err := db.Get(e, "SELECT * from Event Where EventID = ? Limit 1", e.EventID)
+	return err
+}
+
 func (e *Event) Update() error {
-	_, err := db.Exec("Update Equipment SET Name = ?, Start = ?, End = ?, Adress = ? where ID = ?", e.Name, e.Start, e.End, e.Adress, e.EventID)
+	_, err := db.Exec("Update Event SET Name = ?, Start = ?, End = ?, Adress = ? where ID = ?", e.Name, e.Start, e.End, e.Adress, e.EventID)
 	return err
 }
 
@@ -327,6 +332,12 @@ func (e *Event) GetParticipiants() ([]Participiant, error) {
 	var pp []Participiant
 	err := db.Select(&pp, "Select * from Participiant Where EventID = ?", e.EventID)
 	return pp, err
+}
+
+func GetEvents() ([]Event, error) {
+	var e []Event
+	err := db.Select(&e, "Select * from Event")
+	return e, err
 }
 
 type Packinglist struct {
@@ -356,7 +367,7 @@ func (p *Packinglist) Update() error {
 }
 
 func (p *Packinglist) Delete() error {
-	_, err := db.Exec("Delete from Packinglist Where ID = ?", p.PackinglistID)
+	_, err := db.Exec("Delete from Packinglist Where PackinglistID = ?", p.PackinglistID)
 	return err
 }
 
