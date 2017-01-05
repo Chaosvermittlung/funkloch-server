@@ -160,13 +160,14 @@ func deleteStoreHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
 		return
 	}
-	decoder := json.NewDecoder(r.Body)
-	var s db100.Store
-	err = decoder.Decode(&s)
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
 	if err != nil {
-		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
+	s := db100.Store{StoreID: id}
 	err = s.Delete()
 	if err != nil {
 		apierror(w, r, "Error deleting Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
