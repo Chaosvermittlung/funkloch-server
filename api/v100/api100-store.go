@@ -18,7 +18,7 @@ func getStoreRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", getStoreHandler).Methods("GET")
 	r.HandleFunc("/{ID}/Manager", getStoreManagerHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchStoreHandler).Methods("PATCH")
-	r.HandleFunc("/{ID}", deleteUserHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}", deleteStoreHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/Items", getStoreItemsHandler).Methods("GET")
 	r.HandleFunc("/{ID}/ItemCount", getStoreItemCountHandler).Methods("GET")
 	r.HandleFunc("/{ID}/NewItem", insertNewStoreItem).Methods("POST")
