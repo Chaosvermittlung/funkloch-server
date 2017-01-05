@@ -16,6 +16,8 @@ func getEquipmentRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/list", listEquipmentHandler).Methods("GET")
 	r.HandleFunc("/count", getEquipmentsCountHandler).Methods("GET")
 	r.HandleFunc("/{ID}", getEquipmentHandler).Methods("GET")
+	r.HandleFunc("/{ID}", deleteEquipmentHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}", patchEquipmentHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}/list", getEquipmentCountHandler).Methods("GET")
 
 	return m
@@ -36,7 +38,7 @@ func postEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = e.Insert()
 	if err != nil {
-		apierror(w, r, "Error Inserting Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error Inserting Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 	j, err := json.Marshal(&e)
@@ -80,7 +82,7 @@ func getEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 	e := db100.Equipment{EquipmentID: id}
 	err = e.GetDetails()
 	if err != nil {
-		apierror(w, r, "Error fetching Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error fetching Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 	j, err := json.Marshal(&e)
@@ -91,6 +93,63 @@ func getEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(j)
+}
+
+func patchEquipmentHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_ADMIN)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	decoder := json.NewDecoder(r.Body)
+	var equ db100.Equipment
+	err = decoder.Decode(&equ)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		return
+	}
+	equ.EquipmentID = id
+	err = equ.Update()
+	if err != nil {
+		apierror(w, r, "Error updating Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	j, err := json.Marshal(&equ)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
+}
+
+func deleteEquipmentHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_ADMIN)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	e := db100.Equipment{EquipmentID: id}
+	err = e.Delete()
+	if err != nil {
+		apierror(w, r, "Error deleting Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
 }
 
 func getEquipmentsCountHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,7 +202,7 @@ func getEquipmentCountHandler(w http.ResponseWriter, r *http.Request) {
 	e := db100.Equipment{EquipmentID: id}
 	err = e.GetDetails()
 	if err != nil {
-		apierror(w, r, "Error fetching Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error fetching Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 	ss, err := db100.GetStores()
