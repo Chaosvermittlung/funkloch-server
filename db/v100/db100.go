@@ -290,6 +290,24 @@ func (s *StoreItem) Delete() error {
 	return err
 }
 
+func (s *StoreItem) GetFaults() ([]Fault, error) {
+	var fls []FaultList
+	var result []Fault
+	err := db.Select(&fls, "Select * from FaultList Where SotreitemID = ?", s.StoreItemID)
+	if err != nil {
+		return result, err
+	}
+	for _, fl := range fls {
+		f := Fault{FaultID: fl.StoreItemID}
+		err := f.GetDetails()
+		if err != nil {
+			return result, err
+		}
+		result = append(result, f)
+	}
+	return result, err
+}
+
 type Event struct {
 	EventID int
 	Name    string
@@ -387,11 +405,6 @@ func (p *PackinglistItem) Insert() error {
 	return err
 }
 
-func (p *PackinglistItem) Update() error {
-	_, err := db.Exec("Update PackinglistItem SET PackinglistID = ?, StoreitemID = ? where PackinglistID = ?, StoreitemID = ?", p.PackinglistID, p.StoreitemID, p.PackinglistID, p.StoreitemID)
-	return err
-}
-
 func (p *PackinglistItem) Delete() error {
 	_, err := db.Exec("Delete from PackinglistItem Where PackinglistID = ?, StoreitemID = ?", p.PackinglistID, p.StoreitemID)
 	return err
@@ -467,5 +480,65 @@ func (p *Wishlistitem) Update() error {
 
 func (p *Wishlistitem) Delete() error {
 	_, err := db.Exec("Delete from Wishlistitem Where WishlistID = ?, EquipmentID = ?", p.WishlistID, p.EquipmentID)
+	return err
+}
+
+type FaultStatus int
+
+const (
+	FaultStatusNew FaultStatus = 1 + iota
+	FaultStatusInRepair
+	FaultStatusFixed
+	FaultStatusUnfixable
+)
+
+type Fault struct {
+	FaultID int
+	Status  FaultStatus
+	Comment string
+}
+
+func (f *Fault) Insert() error {
+	res, err := db.Exec("Insert Into Fault (Status, Comment) Values (?, ?)", f.Status, f.Comment)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	f.FaultID = int(id)
+	return nil
+}
+
+func (f *Fault) Update() error {
+	_, err := db.Exec("Update Fault SET Status = ?, Comment = ? where ID = ?", f.Status, f.Comment, f.FaultID)
+	return err
+}
+
+func (f *Fault) Delete() error {
+	_, err := db.Exec("Delete from Wishlist Where ID = ?", f.FaultID)
+	return err
+}
+
+func (f *Fault) GetDetails() error {
+	err := db.Get(&f, "Select * from Fault where FaultId = ? Limit 1", f.FaultID)
+	return err
+}
+
+type FaultList struct {
+	FaultID     int
+	StoreItemID int
+}
+
+func (f *FaultList) Insert() error {
+	_, err := db.Exec("Insert Into FaultList (FaultID, StoreitemID) Values (?, ?)", f.FaultID, f.StoreItemID)
+	return err
+}
+
+func (f *FaultList) Delete() error {
+	_, err := db.Exec("Delete from PackinglistItem Where PackinglistID = ?, StoreitemID = ?", f.FaultID, f.StoreItemID)
 	return err
 }
