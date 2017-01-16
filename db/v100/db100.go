@@ -280,6 +280,11 @@ func (s *StoreItem) Insert() error {
 	return nil
 }
 
+func (s *StoreItem) GetDetails() error {
+	err := db.Select(s, "Select * from StoreItem Where StoreitemID = ? LIMIT 1", s.StoreItemID)
+	return err
+}
+
 func (s *StoreItem) Update() error {
 	_, err := db.Exec("Update StoreItem SET StoreID = ? where ID = ?", s.StoreID, s.StoreItemID)
 	return err
@@ -288,6 +293,12 @@ func (s *StoreItem) Update() error {
 func (s *StoreItem) Delete() error {
 	_, err := db.Exec("Delete from StoreItem Where StoreItemID = ?", s.StoreItemID)
 	return err
+}
+
+func GetStoreItems() ([]StoreItem, error) {
+	var ss []StoreItem
+	err := db.Get(&ss, "Select * from StoreItem")
+	return ss, err
 }
 
 func (s *StoreItem) GetFaults() ([]Fault, error) {
@@ -306,6 +317,19 @@ func (s *StoreItem) GetFaults() ([]Fault, error) {
 		result = append(result, f)
 	}
 	return result, err
+}
+
+func (s *StoreItem) PostFault(f Fault) (Fault, error) {
+	err := f.Insert()
+	if err != nil {
+		return f, err
+	}
+	fl := FaultList{FaultID: f.FaultID, StoreItemID: s.StoreItemID}
+	err = fl.Insert()
+	if err != nil {
+		return f, err
+	}
+	return f, nil
 }
 
 type Event struct {

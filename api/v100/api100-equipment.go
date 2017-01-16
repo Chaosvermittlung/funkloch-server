@@ -60,6 +60,7 @@ func listEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 	ee, err := db100.GetEquipment()
 	if err != nil {
 		apierror(w, r, "Error fetching Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
 	}
 	j, err := json.Marshal(&ee)
 	if err != nil {
@@ -156,10 +157,12 @@ func getEquipmentsCountHandler(w http.ResponseWriter, r *http.Request) {
 	ee, err := db100.GetEquipment()
 	if err != nil {
 		apierror(w, r, "Error fetching Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
 	}
 	ss, err := db100.GetStores()
 	if err != nil {
 		apierror(w, r, "Error fetching Stores: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
 	}
 	var result []equipmentCountResponse
 
@@ -208,6 +211,7 @@ func getEquipmentCountHandler(w http.ResponseWriter, r *http.Request) {
 	ss, err := db100.GetStores()
 	if err != nil {
 		apierror(w, r, "Error fetching Stores: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
 	}
 	var result []equipmentCountResponse
 
