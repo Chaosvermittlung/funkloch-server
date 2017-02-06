@@ -17,8 +17,6 @@ func getStoreItemRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", getStoreItemHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchStoreItemHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteStoreItemHandler).Methods("DELETE")
-	r.HandleFunc("/{ID}/fault", getStoreItemFaultsHandler).Methods("GET")
-	r.HandleFunc("/{ID}/fault", postStoreItemFaultHandler).Methods("POST")
 	return m
 }
 
@@ -145,59 +143,4 @@ func deleteStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error deleting StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-}
-
-func getStoreItemFaultsHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	i := vars["ID"]
-	id, err := strconv.Atoi(i)
-	if err != nil {
-		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
-		return
-	}
-	s := db100.StoreItem{StoreItemID: id}
-	ff, err := s.GetFaults()
-	if err != nil {
-		apierror(w, r, "Error fetching StoreItems: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-		return
-	}
-	j, err := json.Marshal(&ff)
-	if err != nil {
-		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(j)
-}
-
-func postStoreItemFaultHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	i := vars["ID"]
-	id, err := strconv.Atoi(i)
-	if err != nil {
-		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
-		return
-	}
-	s := db100.StoreItem{StoreItemID: id}
-	decoder := json.NewDecoder(r.Body)
-	var f db100.Fault
-	err = decoder.Decode(&f)
-	if err != nil {
-		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
-		return
-	}
-	nf, err := s.PostFault(f)
-	if err != nil {
-		apierror(w, r, "Error Posting Fault: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-		return
-	}
-	j, err := json.Marshal(&nf)
-	if err != nil {
-		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(j)
 }

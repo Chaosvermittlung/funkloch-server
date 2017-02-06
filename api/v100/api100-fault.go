@@ -13,10 +13,39 @@ import (
 func getFaultRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
 	r.HandleFunc("/", listFaultsHandler).Methods("GET")
+	r.HandleFunc("/", postFaultHandler).Methods("POST")
 	r.HandleFunc("/{ID}", getFaultHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchFaultHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteFaultHandler).Methods("DELETE")
 	return m
+}
+
+func postFaultHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	decoder := json.NewDecoder(r.Body)
+	var f db100.Fault
+	err = decoder.Decode(&f)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		return
+	}
+	err = f.Insert()
+	if err != nil {
+		apierror(w, r, "Error Inserting Fault: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	j, err := json.Marshal(&f)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
 }
 
 func listFaultsHandler(w http.ResponseWriter, r *http.Request) {
