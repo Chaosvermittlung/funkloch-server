@@ -33,6 +33,11 @@ func postFaultHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
 		return
 	}
+	if (f.Status < db100.FaultStatusNew) || (f.Status > db100.FaultStatusUnfixable) {
+		apierror(w, r, "FaultStatus out of bound", http.StatusBadRequest, ERROR_JSONERROR)
+		return
+	}
+
 	err = f.Insert()
 	if err != nil {
 		apierror(w, r, "Error Inserting Fault: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
