@@ -114,8 +114,8 @@ func TestPatchUser(t *testing.T) {
 		t.Fatalf("No error expected but got %v", err)
 	}
 
-	if u.Email != "test@netfabb.com" {
-		t.Errorf("Expected Email test@netfabb.com but got %v", u.Email)
+	if u.Email != "admin@otherhost" {
+		t.Errorf("Expected Email admin@otherhost but got %v", u.Email)
 	}
 
 	if u.Right != USERRIGHT_MEMBER {
