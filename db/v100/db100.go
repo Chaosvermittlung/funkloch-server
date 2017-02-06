@@ -389,6 +389,17 @@ func (p *Packinglist) Insert() error {
 	return nil
 }
 
+func GetPackinglists() ([]Packinglist, error) {
+	var p []Packinglist
+	err := db.Select(&p, "Select * from Packinglist")
+	return p, err
+}
+
+func (p *Packinglist) GetDetails() error {
+	err := db.Select(p, "Select * from Packinglist Where PackinglistID = ? LIMIT 1", p.PackinglistID)
+	return err
+}
+
 func (p *Packinglist) Update() error {
 	_, err := db.Exec("Update Packinglist SET name = ?, EventID = ? where ID = ?", p.Name, p.EventID, p.PackinglistID)
 	return err
@@ -490,7 +501,7 @@ func (p *Wishlistitem) Delete() error {
 type FaultStatus int
 
 const (
-	FaultStatusNew FaultStatus = 1 + iota
+	FaultStatusNew FaultStatus = 0 + iota
 	FaultStatusInRepair
 	FaultStatusFixed
 	FaultStatusUnfixable

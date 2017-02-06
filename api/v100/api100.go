@@ -37,6 +37,8 @@ func GetSubrouter(prefix string) *interpose.Middleware {
 	a100.PathPrefix("/storeitem").Handler(a100storeitem)
 	a100fault := getFaultRouter(prefix + "/fault")
 	a100.PathPrefix("/fault").Handler(a100fault)
+	a100packinglist := getPackinglistRouter(prefix + "/packinglist")
+	a100.PathPrefix("/packinglist").Handler(a100packinglist)
 
 	middle100.UseHandler(a100)
 	return middle100
