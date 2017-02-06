@@ -302,34 +302,14 @@ func GetStoreItems() ([]StoreItem, error) {
 }
 
 func (s *StoreItem) GetFaults() ([]Fault, error) {
-	var fls []FaultList
 	var result []Fault
-	err := db.Select(&fls, "Select * from FaultList Where SotreitemID = ?", s.StoreItemID)
-	if err != nil {
-		return result, err
-	}
-	for _, fl := range fls {
-		f := Fault{FaultID: fl.StoreItemID}
-		err := f.GetDetails()
-		if err != nil {
-			return result, err
-		}
-		result = append(result, f)
-	}
+	err := db.Select(&result, "Select * from Fault Where StoreitemID = ?", s.StoreItemID)
 	return result, err
 }
 
 func (s *StoreItem) PostFault(f Fault) (Fault, error) {
 	err := f.Insert()
-	if err != nil {
-		return f, err
-	}
-	fl := FaultList{FaultID: f.FaultID, StoreItemID: s.StoreItemID}
-	err = fl.Insert()
-	if err != nil {
-		return f, err
-	}
-	return f, nil
+	return f, err
 }
 
 type Event struct {
@@ -517,9 +497,10 @@ const (
 )
 
 type Fault struct {
-	FaultID int
-	Status  FaultStatus
-	Comment string
+	FaultID     int
+	StoreItemID int
+	Status      FaultStatus
+	Comment     string
 }
 
 func (f *Fault) Insert() error {
@@ -555,20 +536,5 @@ func (f *Fault) Delete() error {
 
 func (f *Fault) GetDetails() error {
 	err := db.Get(&f, "Select * from Fault where FaultId = ? Limit 1", f.FaultID)
-	return err
-}
-
-type FaultList struct {
-	FaultID     int
-	StoreItemID int
-}
-
-func (f *FaultList) Insert() error {
-	_, err := db.Exec("Insert Into FaultList (FaultID, StoreitemID) Values (?, ?)", f.FaultID, f.StoreItemID)
-	return err
-}
-
-func (f *FaultList) Delete() error {
-	_, err := db.Exec("Delete from PackinglistItem Where PackinglistID = ?, StoreitemID = ?", f.FaultID, f.StoreItemID)
 	return err
 }
