@@ -142,8 +142,8 @@ func deleteFaultHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
-	s := db100.Fault{FaultID: id}
-	err = s.Delete()
+	f := db100.Fault{FaultID: id}
+	err = f.Delete()
 	if err != nil {
 		apierror(w, r, "Error deleting Fault: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
