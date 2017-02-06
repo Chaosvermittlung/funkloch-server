@@ -537,6 +537,12 @@ func (f *Fault) Insert() error {
 	return nil
 }
 
+func GetFaults() ([]Fault, error) {
+	var f []Fault
+	err := db.Select(&f, "Select * from Fault")
+	return f, err
+}
+
 func (f *Fault) Update() error {
 	_, err := db.Exec("Update Fault SET Status = ?, Comment = ? where ID = ?", f.Status, f.Comment, f.FaultID)
 	return err
