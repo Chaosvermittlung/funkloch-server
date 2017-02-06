@@ -20,7 +20,7 @@ func getEventRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", deleteEventHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/Participiants", getEventParticipiantsHandler).Methods("GET")
 	r.HandleFunc("/{ID}/Participiants", postEventParticipiantHandler).Methods("POST")
-	r.HandleFunc("/{ID}/Participiants", deleteEventParticipiantsHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/Participiants", deleteEventParticipiantHandler).Methods("DELETE")
 	return m
 }
 
