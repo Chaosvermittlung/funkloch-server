@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 
 func TestUserInsert(t *testing.T) {
 
-	u := User{UserID: -1, Username: "admin", Password: "admin", Email: "admin@localhost", Right: USERRIGHT_ADMIN}
+	u := User{UserID: -1, Username: "test", Password: "test", Email: "test@test", Right: USERRIGHT_ADMIN}
 	s, err := global.GenerateSalt()
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
@@ -61,7 +61,7 @@ func TestDoesUserExist(t *testing.T) {
 		t.Errorf("Expected false got %v", cont)
 	}
 
-	cont, err = DoesUserExist("admin")
+	cont, err = DoesUserExist("test")
 
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
@@ -77,36 +77,36 @@ func TestGetUsers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
 	}
-	if len(uu) != 1 {
-		t.Error("Expected length 1 got %v", len(uu))
+	if len(uu) != 2 {
+		t.Error("Expected length 1 got ", len(uu))
 	}
 }
 
 func TestGetDetailstoUsername(t *testing.T) {
-	u := User{Username: "admin"}
+	u := User{Username: "test"}
 	err := u.GetDetailstoUsername()
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
 	}
-	if u.UserID != 1 {
+	if u.UserID != 2 {
 		t.Errorf("Expected User_ID 1 but got %v", u.UserID)
 	}
 }
 
 func TestGetUserDetails(t *testing.T) {
-	u := User{UserID: 1}
+	u := User{UserID: 2}
 	err := u.GetDetails()
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
 	}
-	if u.Username != "admin" {
+	if u.Username != "test" {
 		t.Errorf("Expected Username netfabb but got %v", u.Username)
 	}
 }
 
 func TestPatchUser(t *testing.T) {
-	u := User{UserID: -1, Username: "admin", Password: "admin", Email: "admin@localhost", Right: USERRIGHT_ADMIN}
-	un := User{UserID: -1, Username: "admin", Password: "admin", Email: "admin@otherhost", Right: USERRIGHT_MEMBER}
+	u := User{UserID: -1, Username: "test", Password: "test", Email: "test@test", Right: USERRIGHT_ADMIN}
+	un := User{UserID: -1, Username: "test", Password: "test", Email: "test@otherhost", Right: USERRIGHT_MEMBER}
 
 	err := u.Patch(un)
 
@@ -114,7 +114,7 @@ func TestPatchUser(t *testing.T) {
 		t.Fatalf("No error expected but got %v", err)
 	}
 
-	if u.Email != "admin@otherhost" {
+	if u.Email != "test@otherhost" {
 		t.Errorf("Expected Email admin@otherhost but got %v", u.Email)
 	}
 
@@ -124,8 +124,8 @@ func TestPatchUser(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
-	u := User{UserID: 1, Username: "admin1", Password: "admin", Email: "admin@otherhost", Right: USERRIGHT_ADMIN}
-	un := User{UserID: 1}
+	u := User{UserID: 2, Username: "test1", Password: "test", Email: "test@otherhost", Right: USERRIGHT_ADMIN}
+	un := User{UserID: 2}
 	err := u.Update()
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
@@ -143,7 +143,7 @@ func TestUpdateUser(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	err := DeleteUser(1)
+	err := DeleteUser(2)
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
 	}
@@ -151,7 +151,7 @@ func TestDeleteUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
 	}
-	if len(uu) != 0 {
-		t.Error("Expected length 0 got %v", len(uu))
+	if len(uu) != 1 {
+		t.Error("Expected length 0 got ", len(uu))
 	}
 }
