@@ -19,7 +19,8 @@ func getEventRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", patchEventHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteEventHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/Participiants", getEventParticipiantsHandler).Methods("GET")
-
+	r.HandleFunc("/{ID}/Participiants", postEventParticipiantHandler).Methods("POST")
+	r.HandleFunc("/{ID}/Participiants", deleteEventParticipiantsHandler).Methods("DELETE")
 	return m
 }
 
@@ -129,6 +130,62 @@ func getEventParticipiantsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(j)
+}
+
+func postEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	decoder := json.NewDecoder(r.Body)
+	var p db100.Participiant
+	err = decoder.Decode(&p)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		return
+	}
+	p.EventID = id
+	err = p.Insert()
+	if err != nil {
+		apierror(w, r, "Error adding Event Participiants: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+}
+
+func deleteEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	decoder := json.NewDecoder(r.Body)
+	var p db100.Participiant
+	err = decoder.Decode(&p)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		return
+	}
+	p.EventID = id
+	err = p.Delete()
+	if err != nil {
+		apierror(w, r, "Error remove Event Participiants: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
 }
 
 func getNextEventHandler(w http.ResponseWriter, r *http.Request) {
