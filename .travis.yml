@@ -1,0 +1,16 @@
+language: go
+
+go:
+  - master
+  
+install:
+  - go get github.com/carbocation/interpose
+  - go get github.com/gorilla/mux
+  - go get github.com/jmoiron/sqlx
+  - go get github.com/mattn/go-sqlite3
+
+notifications:
+  email: false
+ 
+os:
+  - linux
