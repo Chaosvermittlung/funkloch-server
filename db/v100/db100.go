@@ -467,6 +467,12 @@ func (w *Wishlist) Insert() error {
 	return nil
 }
 
+func GetWishlists() ([]Wishlist, error) {
+	var ww []Wishlist
+	err := db.Select(&ww, "Select * from Wishlist")
+	return ww, err
+}
+
 func (w *Wishlist) Update() error {
 	_, err := db.Exec("Update Wishlist SET name = ? where ID = ?", w.Name, w.WishlistID)
 	return err
@@ -474,6 +480,11 @@ func (w *Wishlist) Update() error {
 
 func (w *Wishlist) Delete() error {
 	_, err := db.Exec("Delete from Wishlist Where ID = ?", w.WishlistID)
+	return err
+}
+
+func (p *Wishlist) GetDetails() error {
+	err := db.Select(p, "Select * from Wishlist Where WishlistID = ? LIMIT 1", p.WishlistID)
 	return err
 }
 
