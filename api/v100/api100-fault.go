@@ -116,7 +116,7 @@ func patchFaultHandler(w http.ResponseWriter, r *http.Request) {
 	fa.FaultID = id
 	err = fa.Update()
 	if err != nil {
-		apierror(w, r, "Error updating Faul: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error updating Fault: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 	j, err := json.Marshal(&fa)

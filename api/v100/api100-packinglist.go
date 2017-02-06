@@ -113,7 +113,7 @@ func patchPackinglistHandler(w http.ResponseWriter, r *http.Request) {
 	pl.PackinglistID = id
 	err = pl.Update()
 	if err != nil {
-		apierror(w, r, "Error updating Faul: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error updating Packinglist: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 	j, err := json.Marshal(&pl)
@@ -142,7 +142,7 @@ func deletePackinglistHandler(w http.ResponseWriter, r *http.Request) {
 	p := db100.Packinglist{PackinglistID: id}
 	err = p.Delete()
 	if err != nil {
-		apierror(w, r, "Error deleting Fault: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error deleting Packinglist: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 }
