@@ -320,3 +320,24 @@ func TestStoreItemGetDetails(t *testing.T) {
 		t.Errorf("Expected EquipmentID = 2 but got %v", si.EquipmentID)
 	}
 }
+
+func TestStoreItemUpdate(t *testing.T) {
+	s := Store{StoreID: -1, Name: "foobar", Adress: "test", Manager: 1}
+	err := s.Insert()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	si := StoreItem{StoreItemID: 1, StoreID: s.StoreID}
+	sin := StoreItem{StoreItemID: 1}
+	err = si.Update()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	err = sin.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if si.StoreID != sin.StoreID {
+		t.Errorf("StoreID missmatch: %v %v", si.StoreID, sin.StoreID)
+	}
+}
