@@ -557,6 +557,6 @@ func (f *Fault) Delete() error {
 }
 
 func (f *Fault) GetDetails() error {
-	err := db.Get(&f, "Select * from Fault where FaultId = ? Limit 1", f.FaultID)
+	err := db.Get(f, "Select * from Fault where FaultId = ? Limit 1", f.FaultID)
 	return err
 }
