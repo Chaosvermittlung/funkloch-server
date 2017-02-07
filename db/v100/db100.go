@@ -526,7 +526,7 @@ type Fault struct {
 }
 
 func (f *Fault) Insert() error {
-	res, err := db.Exec("Insert Into Fault (Status, Comment) Values (?, ?)", f.Status, f.Comment)
+	res, err := db.Exec("Insert Into Fault (StoreItemId, Status, Comment) Values (?, ?, ?)", f.StoreItemID, f.Status, f.Comment)
 	if err != nil {
 		log.Println(err)
 		return err
