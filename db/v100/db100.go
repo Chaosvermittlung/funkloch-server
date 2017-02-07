@@ -547,12 +547,12 @@ func GetFaults() ([]Fault, error) {
 }
 
 func (f *Fault) Update() error {
-	_, err := db.Exec("Update Fault SET Status = ?, Comment = ? where ID = ?", f.Status, f.Comment, f.FaultID)
+	_, err := db.Exec("Update Fault SET Status = ?, Comment = ? where FaultID = ?", f.Status, f.Comment, f.FaultID)
 	return err
 }
 
 func (f *Fault) Delete() error {
-	_, err := db.Exec("Delete from Fault Where ID = ?", f.FaultID)
+	_, err := db.Exec("Delete from Fault Where FaultID = ?", f.FaultID)
 	return err
 }
 
