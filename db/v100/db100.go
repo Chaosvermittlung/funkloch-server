@@ -443,7 +443,7 @@ func (p *Participiant) Update() error {
 }
 
 func (p *Participiant) Delete() error {
-	_, err := db.Exec("Delete from PackinglistItem Where UserID = ?, EventID = ?", p.UserID, p.EventID)
+	_, err := db.Exec("Delete from Participiant Where UserID = ?, EventID = ?", p.UserID, p.EventID)
 	return err
 }
 
@@ -552,7 +552,7 @@ func (f *Fault) Update() error {
 }
 
 func (f *Fault) Delete() error {
-	_, err := db.Exec("Delete from Wishlist Where ID = ?", f.FaultID)
+	_, err := db.Exec("Delete from Fault Where ID = ?", f.FaultID)
 	return err
 }
 
