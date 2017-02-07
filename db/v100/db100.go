@@ -266,7 +266,7 @@ type StoreItem struct {
 }
 
 func (s *StoreItem) Insert() error {
-	res, err := db.Exec("Insert Into Sotreitem (StoreID, EquipmentID) Values (?,?)", s.StoreID, s.EquipmentID)
+	res, err := db.Exec("Insert Into Storeitem (StoreID, EquipmentID) Values (?,?)", s.StoreID, s.EquipmentID)
 	if err != nil {
 		log.Println(err)
 		return err
