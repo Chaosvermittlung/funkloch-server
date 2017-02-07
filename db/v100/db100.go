@@ -281,7 +281,7 @@ func (s *StoreItem) Insert() error {
 }
 
 func (s *StoreItem) GetDetails() error {
-	err := db.Select(s, "Select * from StoreItem Where StoreitemID = ? LIMIT 1", s.StoreItemID)
+	err := db.Get(s, "Select * from StoreItem Where StoreitemID = ? LIMIT 1", s.StoreItemID)
 	return err
 }
 
@@ -396,7 +396,7 @@ func GetPackinglists() ([]Packinglist, error) {
 }
 
 func (p *Packinglist) GetDetails() error {
-	err := db.Select(p, "Select * from Packinglist Where PackinglistID = ? LIMIT 1", p.PackinglistID)
+	err := db.Get(p, "Select * from Packinglist Where PackinglistID = ? LIMIT 1", p.PackinglistID)
 	return err
 }
 
@@ -484,7 +484,7 @@ func (w *Wishlist) Delete() error {
 }
 
 func (p *Wishlist) GetDetails() error {
-	err := db.Select(p, "Select * from Wishlist Where WishlistID = ? LIMIT 1", p.WishlistID)
+	err := db.Get(p, "Select * from Wishlist Where WishlistID = ? LIMIT 1", p.WishlistID)
 	return err
 }
 
