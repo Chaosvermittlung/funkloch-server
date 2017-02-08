@@ -414,7 +414,7 @@ func (p *Packinglist) GetItems() ([]StoreItem, error) {
 	}
 	for _, pli := range plis {
 		var si StoreItem
-		err := db.Get(si, "Select * from StoreItem Where StoreItemID = ?", pli.StoreitemID)
+		err := db.Get(&si, "Select * from StoreItem Where StoreItemID = ?", pli.StoreitemID)
 		if err != nil {
 			return res, err
 		}
