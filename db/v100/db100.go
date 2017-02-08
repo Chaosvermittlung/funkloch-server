@@ -341,12 +341,12 @@ func (e *Event) GetDetails() error {
 }
 
 func (e *Event) Update() error {
-	_, err := db.Exec("Update Event SET Name = ?, Start = ?, End = ?, Adress = ? where ID = ?", e.Name, e.Start, e.End, e.Adress, e.EventID)
+	_, err := db.Exec("Update Event SET Name = ?, Start = ?, End = ?, Adress = ? where EventID = ?", e.Name, e.Start, e.End, e.Adress, e.EventID)
 	return err
 }
 
 func (e *Event) Delete() error {
-	_, err := db.Exec("Delete from Event Where ID = ?", e.EventID)
+	_, err := db.Exec("Delete from Event Where EventID = ?", e.EventID)
 	return err
 }
 
