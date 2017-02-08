@@ -497,18 +497,36 @@ func GetWishlists() ([]Wishlist, error) {
 }
 
 func (w *Wishlist) Update() error {
-	_, err := db.Exec("Update Wishlist SET name = ? where ID = ?", w.Name, w.WishlistID)
+	_, err := db.Exec("Update Wishlist SET name = ? where WishlistID = ?", w.Name, w.WishlistID)
 	return err
 }
 
 func (w *Wishlist) Delete() error {
-	_, err := db.Exec("Delete from Wishlist Where ID = ?", w.WishlistID)
+	_, err := db.Exec("Delete from Wishlist Where WishlistID = ?", w.WishlistID)
 	return err
 }
 
 func (p *Wishlist) GetDetails() error {
 	err := db.Get(p, "Select * from Wishlist Where WishlistID = ? LIMIT 1", p.WishlistID)
 	return err
+}
+
+func (p *Wishlist) GetItems() ([]Equipment, error) {
+	var wlis []Wishlistitem
+	var res []Equipment
+	err := db.Select(&wlis, "Select * from WishlistItem Where WishlistID = ?", p.WishlistID)
+	if err != nil {
+		return res, err
+	}
+	for _, wli := range wlis {
+		var e Equipment
+		err := db.Get(&e, "Select * from Equipment Where EquipmentID = ?", wli.EquipmentID)
+		if err != nil {
+			return res, err
+		}
+		res = append(res, e)
+	}
+	return res, nil
 }
 
 type Wishlistitem struct {
@@ -518,12 +536,17 @@ type Wishlistitem struct {
 }
 
 func (p *Wishlistitem) Insert() error {
-	_, err := db.Exec("Insert Into Wishlistitem (WishlistID, EquipmentID) Values (?, ?)", p.WishlistID, p.EquipmentID)
+	_, err := db.Exec("Insert Into Wishlistitem (WishlistID, EquipmentID, Count) Values (?, ?, ?)", p.WishlistID, p.EquipmentID, p.Count)
 	return err
 }
 
 func (p *Wishlistitem) Update() error {
-	_, err := db.Exec("Update Wishlistitem SET WishlistID = ?, EquipmentID = ? where WishlistID = ?, EquipmentID = ?", p.WishlistID, p.EquipmentID, p.WishlistID, p.EquipmentID)
+	_, err := db.Exec("Update Wishlistitem Set Count = ? where WishlistID = ? and EquipmentID = ?", p.Count, p.WishlistID, p.EquipmentID)
+	return err
+}
+
+func (p *Wishlistitem) GetDetails() error {
+	err := db.Get(p, "Select * from Wishlistitem where WishlistID = ? and EquipmentID = ? Limit 1", p.WishlistID, p.EquipmentID)
 	return err
 }
 
