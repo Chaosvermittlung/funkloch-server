@@ -433,7 +433,7 @@ type Participiant struct {
 }
 
 func (p *Participiant) Insert() error {
-	_, err := db.Exec("Insert Into Participant (UserID, EventID, Arrival, Departure) Values (?, ?, ?, ?)", p.UserID, p.EventID)
+	_, err := db.Exec("Insert Into Participant (UserID, EventID, Arrival, Departure) Values (?, ?, ?, ?)", p.UserID, p.EventID, p.Arrival, p.Departure)
 	return err
 }
 
