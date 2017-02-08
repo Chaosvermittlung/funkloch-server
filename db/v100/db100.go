@@ -401,8 +401,26 @@ func (p *Packinglist) GetDetails() error {
 }
 
 func (p *Packinglist) Update() error {
-	_, err := db.Exec("Update Packinglist SET name = ?, EventID = ? where ID = ?", p.Name, p.EventID, p.PackinglistID)
+	_, err := db.Exec("Update Packinglist SET name = ?, EventID = ? where PackinglistID = ?", p.Name, p.EventID, p.PackinglistID)
 	return err
+}
+
+func (p *Packinglist) GetItems() ([]StoreItem, error) {
+	var plis []PackinglistItem
+	var res []StoreItem
+	err := db.Select(&plis, "Select * from PackinglistItem Where PackinglistID = ?", p.PackinglistID)
+	if err != nil {
+		return res, err
+	}
+	for _, pli := range plis {
+		var si StoreItem
+		err := db.Get(si, "Select * from StoreItem Where StoreItemID = ?", pli.StoreitemID)
+		if err != nil {
+			return res, err
+		}
+		res = append(res, si)
+	}
+	return res, nil
 }
 
 func (p *Packinglist) Delete() error {
