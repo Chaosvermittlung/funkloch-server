@@ -433,17 +433,17 @@ type Participiant struct {
 }
 
 func (p *Participiant) Insert() error {
-	_, err := db.Exec("Insert Into Participiant (UserID, EventID, Arrival, Departure) Values (?, ?, ?, ?)", p.UserID, p.EventID)
+	_, err := db.Exec("Insert Into Participant (UserID, EventID, Arrival, Departure) Values (?, ?, ?, ?)", p.UserID, p.EventID)
 	return err
 }
 
 func (p *Participiant) Update() error {
-	_, err := db.Exec("Update Participiant SET UserID = ?, EventID = ?, Arrival = ?, Departure = ? where UserID = ?, EventID = ?", p.UserID, p.EventID, p.Arrival, p.Departure, p.UserID, p.EventID)
+	_, err := db.Exec("Update Participant SET UserID = ?, EventID = ?, Arrival = ?, Departure = ? where UserID = ?, EventID = ?", p.UserID, p.EventID, p.Arrival, p.Departure, p.UserID, p.EventID)
 	return err
 }
 
 func (p *Participiant) Delete() error {
-	_, err := db.Exec("Delete from Participiant Where UserID = ?, EventID = ?", p.UserID, p.EventID)
+	_, err := db.Exec("Delete from Participant Where UserID = ?, EventID = ?", p.UserID, p.EventID)
 	return err
 }
 
