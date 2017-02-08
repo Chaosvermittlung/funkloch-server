@@ -350,9 +350,9 @@ func (e *Event) Delete() error {
 	return err
 }
 
-func (e *Event) GetParticipiants() ([]Participiant, error) {
-	var pp []Participiant
-	err := db.Select(&pp, "Select * from Participiant Where EventID = ?", e.EventID)
+func (e *Event) GetParticipants() ([]Participant, error) {
+	var pp []Participant
+	err := db.Select(&pp, "Select * from Participant Where EventID = ?", e.EventID)
 	return pp, err
 }
 
@@ -425,25 +425,30 @@ func (p *PackinglistItem) Delete() error {
 	return err
 }
 
-type Participiant struct {
+type Participant struct {
 	UserID    int
 	EventID   int
 	Arrival   time.Time
 	Departure time.Time
 }
 
-func (p *Participiant) Insert() error {
+func (p *Participant) Insert() error {
 	_, err := db.Exec("Insert Into Participant (UserID, EventID, Arrival, Departure) Values (?, ?, ?, ?)", p.UserID, p.EventID, p.Arrival, p.Departure)
 	return err
 }
 
-func (p *Participiant) Update() error {
+func (p *Participant) Update() error {
 	_, err := db.Exec("Update Participant SET Arrival = ?, Departure = ? where UserID = ?, EventID = ?", p.Arrival, p.Departure, p.UserID, p.EventID)
 	return err
 }
 
-func (p *Participiant) Delete() error {
+func (p *Participant) Delete() error {
 	_, err := db.Exec("Delete from Participant Where UserID = ?, EventID = ?", p.UserID, p.EventID)
+	return err
+}
+
+func (p *Participant) GetDetails() error {
+	err := db.Get(p, "Select * from Participant Where UserID = ? and EventID = ? LIMIT 1", p.UserID, p.EventID)
 	return err
 }
 

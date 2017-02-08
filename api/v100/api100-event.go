@@ -101,7 +101,7 @@ func getEventParticipiantsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	e := db100.Event{EventID: id}
-	pp, err := e.GetParticipiants()
+	pp, err := e.GetParticipants()
 	if err != nil {
 		apierror(w, r, "Error fetching Event Participiants: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
@@ -146,7 +146,7 @@ func postEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	decoder := json.NewDecoder(r.Body)
-	var p db100.Participiant
+	var p db100.Participant
 	err = decoder.Decode(&p)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
@@ -174,7 +174,7 @@ func deleteEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	decoder := json.NewDecoder(r.Body)
-	var p db100.Participiant
+	var p db100.Participant
 	err = decoder.Decode(&p)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
