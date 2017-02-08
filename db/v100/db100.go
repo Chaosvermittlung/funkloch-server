@@ -443,7 +443,7 @@ func (p *Participant) Update() error {
 }
 
 func (p *Participant) Delete() error {
-	_, err := db.Exec("Delete from Participant Where UserID = ?, EventID = ?", p.UserID, p.EventID)
+	_, err := db.Exec("Delete from Participant Where UserID = ? and EventID = ?", p.UserID, p.EventID)
 	return err
 }
 
