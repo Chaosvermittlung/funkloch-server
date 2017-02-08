@@ -439,7 +439,7 @@ func (p *PackinglistItem) Insert() error {
 }
 
 func (p *PackinglistItem) Delete() error {
-	_, err := db.Exec("Delete from PackinglistItem Where PackinglistID = ?, StoreitemID = ?", p.PackinglistID, p.StoreitemID)
+	_, err := db.Exec("Delete from PackinglistItem Where PackinglistID = ? and StoreitemID = ?", p.PackinglistID, p.StoreitemID)
 	return err
 }
 
@@ -528,7 +528,7 @@ func (p *Wishlistitem) Update() error {
 }
 
 func (p *Wishlistitem) Delete() error {
-	_, err := db.Exec("Delete from Wishlistitem Where WishlistID = ?, EquipmentID = ?", p.WishlistID, p.EquipmentID)
+	_, err := db.Exec("Delete from Wishlistitem Where WishlistID = ? and EquipmentID = ?", p.WishlistID, p.EquipmentID)
 	return err
 }
 
