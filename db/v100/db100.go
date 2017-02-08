@@ -438,7 +438,7 @@ func (p *Participant) Insert() error {
 }
 
 func (p *Participant) Update() error {
-	_, err := db.Exec("Update Participant SET Arrival = ?, Departure = ? where UserID = ?, EventID = ?", p.Arrival, p.Departure, p.UserID, p.EventID)
+	_, err := db.Exec("Update Participant SET Arrival = ?, Departure = ? where UserID = ? and EventID = ?", p.Arrival, p.Departure, p.UserID, p.EventID)
 	return err
 }
 
