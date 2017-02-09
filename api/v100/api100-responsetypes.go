@@ -22,3 +22,8 @@ type eventParticipiantsResponse struct {
 	Arrival   time.Time
 	Departure time.Time
 }
+
+type wishlistItemsResponse struct {
+	Equipment db100.Equipment
+	Count     int
+}

@@ -17,6 +17,7 @@ func getWishlistRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", getWishlistHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchWishlistHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteWishlistHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/Items", getWishlistItemsHandler).Methods("GET")
 	r.HandleFunc("/{ID}/Item/{IID}/{Count}", addWishlistItemHandler).Methods("POST")
 	r.HandleFunc("/{ID}/Item/{IID}", removeWishlistItemHandler).Methods("DELETE")
 	return m
@@ -209,4 +210,39 @@ func removeWishlistItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func getWishlistItemsHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	wi := db100.Wishlist{WishlistID: id}
+	ee, err := wi.GetItems()
+	if err != nil {
+		apierror(w, r, "Error fetching Wishlistitems: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	var wir []wishlistItemsResponse
+	for _, e := range ee {
+		wli := db100.Wishlistitem{WishlistID: wi.WishlistID, EquipmentID: e.EquipmentID}
+		err := wli.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching Wishlistitem Details: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		w := wishlistItemsResponse{Equipment: e, Count: wli.Count}
+		wir = append(wir, w)
+	}
+	j, err := json.Marshal(&wir)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
 }
