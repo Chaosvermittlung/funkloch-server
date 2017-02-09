@@ -27,3 +27,9 @@ type wishlistItemsResponse struct {
 	Equipment db100.Equipment
 	Count     int
 }
+
+type packinglistItemsResponse struct {
+	StoreItemID int
+	Equipment   db100.Equipment
+	Store       db100.Store
+}

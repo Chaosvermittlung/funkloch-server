@@ -17,6 +17,7 @@ func getPackinglistRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", getPackinglistHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchPackinglistHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deletePackinglistHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/Items", getPackinglistItems).Methods("GET")
 	r.HandleFunc("/{ID}/Item/{IID}", addPackinglistItemHandler).Methods("POST")
 	r.HandleFunc("/{ID}/Item/{IID}", removePackinglistItemHandler).Methods("DELETE")
 	return m
@@ -203,4 +204,50 @@ func removePackinglistItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func getPackinglistItems(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	p := db100.Packinglist{PackinglistID: id}
+	sis, err := p.GetItems()
+	if err != nil {
+		apierror(w, r, "Error fetching Packinglist Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	var plir []packinglistItemsResponse
+	for _, si := range sis {
+		e := db100.Equipment{EquipmentID: si.EquipmentID}
+		err := e.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching Equipment Details: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		s := db100.Store{StoreID: si.StoreID}
+		err = s.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching Store Details: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		pli := packinglistItemsResponse{StoreItemID: si.StoreItemID, Equipment: e, Store: s}
+		plir = append(plir, pli)
+	}
+	j, err := json.Marshal(&plir)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
 }
