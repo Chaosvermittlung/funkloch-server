@@ -1,12 +1,14 @@
-engines:
-  gofmt:
+--- 
+engines: 
+  fixme: 
     enabled: true
-  golint:
+  gofmt: 
     enabled: true
-  govet:
+  golint: 
     enabled: true
-  fixme:
+  govet: 
     enabled: true
-ratings:
-  paths:
-    - "**.go
+ratings: 
+  paths: 
+    - "**.go"
+   
