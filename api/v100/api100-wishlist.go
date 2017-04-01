@@ -12,8 +12,8 @@ import (
 
 func getWishlistRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
-	r.HandleFunc("/", listWishlistsHandler).Methods("GET")
 	r.HandleFunc("/", postWishlistHandler).Methods("POST")
+	r.HandleFunc("/list", listWishlistsHandler).Methods("GET")
 	r.HandleFunc("/{ID}", getWishlistHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchWishlistHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteWishlistHandler).Methods("DELETE")

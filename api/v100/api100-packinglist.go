@@ -12,8 +12,8 @@ import (
 
 func getPackinglistRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
-	r.HandleFunc("/", listPackinglistsHandler).Methods("GET")
 	r.HandleFunc("/", postPackinglistHandler).Methods("POST")
+	r.HandleFunc("/list", listPackinglistsHandler).Methods("GET")
 	r.HandleFunc("/{ID}", getPackinglistHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchPackinglistHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deletePackinglistHandler).Methods("DELETE")

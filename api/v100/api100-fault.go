@@ -12,8 +12,8 @@ import (
 
 func getFaultRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
-	r.HandleFunc("/", listFaultsHandler).Methods("GET")
 	r.HandleFunc("/", postFaultHandler).Methods("POST")
+	r.HandleFunc("/list", listFaultsHandler).Methods("GET")
 	r.HandleFunc("/{ID}", getFaultHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchFaultHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteFaultHandler).Methods("DELETE")

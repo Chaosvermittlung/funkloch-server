@@ -13,7 +13,7 @@ import (
 func getStoreItemRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
 	r.HandleFunc("/", postStoreItemHandler).Methods("POST")
-	r.HandleFunc("/", listStoreItemsHandler).Methods("GET")
+	r.HandleFunc("/list", listStoreItemsHandler).Methods("GET")
 	r.HandleFunc("/{ID}", getStoreItemHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchStoreItemHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteStoreItemHandler).Methods("DELETE")

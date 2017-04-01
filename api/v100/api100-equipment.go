@@ -13,7 +13,7 @@ import (
 func getEquipmentRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
 	r.HandleFunc("/", postEquipmentHandler).Methods("POST")
-	r.HandleFunc("/", listEquipmentHandler).Methods("GET")
+	r.HandleFunc("/list", listEquipmentHandler).Methods("GET")
 	r.HandleFunc("/count", getEquipmentsCountHandler).Methods("GET")
 	r.HandleFunc("/{ID}", getEquipmentHandler).Methods("GET")
 	r.HandleFunc("/{ID}", deleteEquipmentHandler).Methods("DELETE")
