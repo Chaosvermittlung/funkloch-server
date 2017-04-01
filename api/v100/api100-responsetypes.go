@@ -6,6 +6,10 @@ import (
 	"github.com/chaosvermittlung/funkloch-server/db/v100"
 )
 
+type authResponse struct {
+	Token string `json:"token"`
+}
+
 type storeItemCountResponse struct {
 	Name  string
 	Count int
