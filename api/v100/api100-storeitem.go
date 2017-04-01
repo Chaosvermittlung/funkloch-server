@@ -49,7 +49,7 @@ func postStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func listStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
-	ss, err := db100.GetEquipment()
+	ss, err := db100.GetStoreItems()
 	if err != nil {
 		apierror(w, r, "Error fetching StoreItems: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return

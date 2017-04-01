@@ -297,7 +297,7 @@ func (s *StoreItem) Delete() error {
 
 func GetStoreItems() ([]StoreItem, error) {
 	var ss []StoreItem
-	err := db.Get(&ss, "Select * from StoreItem")
+	err := db.Select(&ss, "Select * from StoreItem")
 	return ss, err
 }
 
