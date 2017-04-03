@@ -272,13 +272,14 @@ func deleteEventHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
 		return
 	}
-	decoder := json.NewDecoder(r.Body)
-	var e db100.Event
-	err = decoder.Decode(&e)
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
 	if err != nil {
-		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
+	e := db100.Event{EventID: id}
 	err = e.Delete()
 	if err != nil {
 		apierror(w, r, "Error deleting Event: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
