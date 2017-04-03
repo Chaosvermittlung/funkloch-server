@@ -190,7 +190,7 @@ func deleteEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getEventPackingLists(w http.ResponseWriter, r *http.Request) {
+func getEventPackinglists(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	i := vars["ID"]
 	id, err := strconv.Atoi(i)
