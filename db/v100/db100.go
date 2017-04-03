@@ -358,7 +358,7 @@ func (e *Event) GetParticipants() ([]Participant, error) {
 
 func (e *Event) GetPackinglists() ([]Packinglist, error) {
 	var pp []Packinglist
-	err := db.Select(pp, "Select * from Packinglist Where EventID = ?", e.EventID)
+	err := db.Select(&pp, "Select * from Packinglist Where EventID = ?", e.EventID)
 	return pp, err
 }
 
