@@ -21,6 +21,7 @@ func getEventRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}/Participiants", getEventParticipiantsHandler).Methods("GET")
 	r.HandleFunc("/{ID}/Participiants", postEventParticipiantHandler).Methods("POST")
 	r.HandleFunc("/{ID}/Participiants", deleteEventParticipiantHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/Packinglist", getEventPackinglists).Methods("GET")
 	return m
 }
 
@@ -110,6 +111,7 @@ func getEventParticipiantsHandler(w http.ResponseWriter, r *http.Request) {
 	var result []eventParticipiantsResponse
 	for _, p := range pp {
 		u := db100.User{UserID: p.UserID}
+		err := u.GetDetails()
 		if err != nil {
 			apierror(w, r, "Error fetching User: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 			return
@@ -186,6 +188,30 @@ func deleteEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error remove Event Participiants: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
+}
+
+func getEventPackingLists(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	e := db100.Event{EventID: id}
+	pp, err := e.GetPackinglists()
+	if err != nil {
+		apierror(w, r, "Error fetching Event Packinglists: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	j, err := json.Marshal(&pp)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
 }
 
 func getNextEventHandler(w http.ResponseWriter, r *http.Request) {
