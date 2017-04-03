@@ -18,9 +18,9 @@ func getEventRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", getEventHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchEventHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteEventHandler).Methods("DELETE")
-	r.HandleFunc("/{ID}/Participiants", getEventParticipiantsHandler).Methods("GET")
-	r.HandleFunc("/{ID}/Participiants", postEventParticipiantHandler).Methods("POST")
-	r.HandleFunc("/{ID}/Participiants", deleteEventParticipiantHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/Participants", getEventParticipantsHandler).Methods("GET")
+	r.HandleFunc("/{ID}/Participants", postEventParticipantHandler).Methods("POST")
+	r.HandleFunc("/{ID}/Participants", deleteEventParticipantHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/Packinglist", getEventPackinglists).Methods("GET")
 	return m
 }
@@ -93,7 +93,7 @@ func getEventHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func getEventParticipiantsHandler(w http.ResponseWriter, r *http.Request) {
+func getEventParticipantsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	i := vars["ID"]
 	id, err := strconv.Atoi(i)
@@ -134,7 +134,7 @@ func getEventParticipiantsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func postEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
+func postEventParticipantHandler(w http.ResponseWriter, r *http.Request) {
 	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
@@ -162,7 +162,7 @@ func postEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func deleteEventParticipiantHandler(w http.ResponseWriter, r *http.Request) {
+func deleteEventParticipantHandler(w http.ResponseWriter, r *http.Request) {
 	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
