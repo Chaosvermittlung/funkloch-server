@@ -135,11 +135,15 @@ func getEventParticipantsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postEventParticipantHandler(w http.ResponseWriter, r *http.Request) {
-	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+
+	token, _ := getTokenfromRequest(r)
+
+	ou, err := getUserfromToken(token)
 	if err != nil {
-		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
 		return
 	}
+
 	vars := mux.Vars(r)
 	i := vars["ID"]
 	id, err := strconv.Atoi(i)
@@ -154,6 +158,15 @@ func postEventParticipantHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
 		return
 	}
+
+	if p.UserID != ou.UserID {
+		err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+		if err != nil {
+			apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+			return
+		}
+	}
+
 	p.EventID = id
 	err = p.Insert()
 	if err != nil {
