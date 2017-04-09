@@ -103,6 +103,11 @@ func getStoreManagerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s := db100.Store{StoreID: id}
+	err = s.GetDetails()
+	if err != nil {
+		apierror(w, r, "Error getting Store Detail: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
 	u, err := s.GetManager()
 	if err != nil {
 		apierror(w, r, "Error fetching Store Manager: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
