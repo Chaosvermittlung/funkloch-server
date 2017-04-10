@@ -325,11 +325,16 @@ func TestStoreItemGetDetails(t *testing.T) {
 
 func TestStoreItemUpdate(t *testing.T) {
 	s := Store{StoreID: -1, Name: "foobar", Adress: "test", Manager: 1}
+	e := Equipment{EquipmentID: -1, Name: "FF54"}
 	err := s.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	si := StoreItem{StoreItemID: 1, StoreID: s.StoreID}
+	err = e.Insert()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	si := StoreItem{StoreItemID: 1, StoreID: s.StoreID, EquipmentID: e.EquipmentID}
 	sin := StoreItem{StoreItemID: 1}
 	err = si.Update()
 	if err != nil {
