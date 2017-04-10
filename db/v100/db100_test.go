@@ -347,6 +347,9 @@ func TestStoreItemUpdate(t *testing.T) {
 	if si.StoreID != sin.StoreID {
 		t.Errorf("StoreID missmatch: %v %v", si.StoreID, sin.StoreID)
 	}
+	if si.EquipmentID != sin.EquipmentID {
+		t.Errorf("StoreID missmatch: %v %v", si.EquipmentID, sin.EquipmentID)
+	}
 }
 
 func TestStoreItemPostFault(t *testing.T) {
