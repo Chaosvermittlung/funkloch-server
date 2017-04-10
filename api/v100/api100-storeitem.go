@@ -90,14 +90,26 @@ func getStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
-	s := db100.StoreItem{StoreItemID: id}
-	err = s.GetDetails()
+	var sir storeItemResponse
+	sir.StoreItem.StoreItemID = id
+	err = sir.StoreItem.GetDetails()
 	if err != nil {
 		apierror(w, r, "Error fetching StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-
-	j, err := json.Marshal(&s)
+	sir.Store.StoreID = sir.StoreItem.StoreID
+	err = sir.Store.GetDetails()
+	if err != nil {
+		apierror(w, r, "Error fetching StoreItem Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	sir.Equipment.EquipmentID = sir.StoreItem.EquipmentID
+	err = sir.Equipment.GetDetails()
+	if err != nil {
+		apierror(w, r, "Error fetching StoreItem Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	j, err := json.Marshal(&sir)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
 		return
