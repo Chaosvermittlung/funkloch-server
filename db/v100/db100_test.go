@@ -348,7 +348,7 @@ func TestStoreItemUpdate(t *testing.T) {
 		t.Errorf("StoreID missmatch: %v %v", si.StoreID, sin.StoreID)
 	}
 	if si.EquipmentID != sin.EquipmentID {
-		t.Errorf("StoreID missmatch: %v %v", si.EquipmentID, sin.EquipmentID)
+		t.Errorf("EquipmentID missmatch: %v %v", si.EquipmentID, sin.EquipmentID)
 	}
 }
 
@@ -388,7 +388,7 @@ func TestStoreGetStoreItems(t *testing.T) {
 
 func TestStoreGetItemCount(t *testing.T) {
 	s := Store{StoreID: 3}
-	c, err := s.GetItemCount(2)
+	c, err := s.GetItemCount(3)
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
