@@ -286,7 +286,7 @@ func (s *StoreItem) GetDetails() error {
 }
 
 func (s *StoreItem) Update() error {
-	_, err := db.Exec("Update StoreItem SET StoreID = ? where StoreItemID = ?", s.StoreID, s.StoreItemID)
+	_, err := db.Exec("Update StoreItem SET StoreID = ? and EquipmentID = ? where StoreItemID = ?", s.StoreID, s.EquipmentID, s.StoreItemID)
 	return err
 }
 
