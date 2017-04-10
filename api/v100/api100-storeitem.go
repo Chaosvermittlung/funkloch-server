@@ -54,7 +54,25 @@ func listStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error fetching StoreItems: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	j, err := json.Marshal(&ss)
+	var res []storeItemResponse
+	for _, s := range ss {
+		var sir storeItemResponse
+		sir.StoreItem = s
+		sir.Equipment.EquipmentID = s.EquipmentID
+		err = sir.Equipment.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching StoreItem Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		sir.Store.StoreID = s.StoreID
+		err = sir.Store.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching StoreItem Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		res = append(res, sir)
+	}
+	j, err := json.Marshal(&res)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
 		return
@@ -78,6 +96,7 @@ func getStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error fetching StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
+
 	j, err := json.Marshal(&s)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)

@@ -15,6 +15,12 @@ type storeItemCountResponse struct {
 	Count int
 }
 
+type storeItemResponse struct {
+	StoreItem db100.StoreItem
+	Store     db100.Store
+	Equipment db100.Equipment
+}
+
 type equipmentCountResponse struct {
 	Equipment db100.Equipment
 	Store     db100.Store
