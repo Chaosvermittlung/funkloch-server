@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/carbocation/interpose"
-	"github.com/chaosvermittlung/coinslot/global"
 	"github.com/chaosvermittlung/funkloch-server/db/v100"
+	"github.com/chaosvermittlung/funkloch-server/global"
 	"github.com/gorilla/mux"
 	jwt "gopkg.in/dgrijalva/jwt-go.v2"
 )
