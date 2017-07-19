@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/chaosvermittlung/funkloch-server/global"
+	"github.com/Chaosvermittlung/funkloch-server/global"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )

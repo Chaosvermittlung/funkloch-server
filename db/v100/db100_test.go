@@ -7,7 +7,7 @@ import (
 
 	"time"
 
-	"github.com/chaosvermittlung/funkloch-server/global"
+	"github.com/Chaosvermittlung/funkloch-server/global"
 )
 
 func TestMain(m *testing.M) {

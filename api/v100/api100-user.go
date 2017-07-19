@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/carbocation/interpose"
-	"github.com/chaosvermittlung/funkloch-server/db/v100"
-	"github.com/chaosvermittlung/funkloch-server/global"
+	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	"github.com/Chaosvermittlung/funkloch-server/global"
 	"github.com/gorilla/mux"
 )
 

@@ -3,7 +3,7 @@ package api100
 import (
 	"time"
 
-	"github.com/chaosvermittlung/funkloch-server/db/v100"
+	"github.com/Chaosvermittlung/funkloch-server/db/v100"
 )
 
 type authResponse struct {

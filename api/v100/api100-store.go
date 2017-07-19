@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/carbocation/interpose"
-	"github.com/chaosvermittlung/funkloch-server/db/v100"
+	"github.com/Chaosvermittlung/funkloch-server/db/v100"
 	"github.com/gorilla/mux"
 )
 
