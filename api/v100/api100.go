@@ -246,7 +246,11 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func authRefreshHandler(w http.ResponseWriter, r *http.Request) {
-	token, _ := getTokenfromRequest(r)
+	token, err := getTokenfromRequest(r)
+	if err != nil {
+		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
+		return
+	}
 
 	un, err := getUserfromToken(token)
 	if err != nil {
@@ -272,7 +276,11 @@ func authRefreshHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func userhasrRight(r *http.Request, ri db100.UserRight) error {
-	token, _ := getTokenfromRequest(r)
+	token, err := getTokenfromRequest(r)
+	if err != nil {
+		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
+		return
+	}
 
 	ou, err := getUserfromToken(token)
 	if err != nil {

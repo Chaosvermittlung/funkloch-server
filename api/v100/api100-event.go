@@ -136,7 +136,11 @@ func getEventParticipantsHandler(w http.ResponseWriter, r *http.Request) {
 
 func postEventParticipantHandler(w http.ResponseWriter, r *http.Request) {
 
-	token, _ := getTokenfromRequest(r)
+	token, err := getTokenfromRequest(r)
+	if err != nil {
+		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
+		return
+	}
 
 	ou, err := getUserfromToken(token)
 	if err != nil {
@@ -176,7 +180,11 @@ func postEventParticipantHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteEventParticipantHandler(w http.ResponseWriter, r *http.Request) {
-	token, _ := getTokenfromRequest(r)
+	token, err := getTokenfromRequest(r)
+	if err != nil {
+		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
+		return
+	}
 
 	ou, err := getUserfromToken(token)
 	if err != nil {

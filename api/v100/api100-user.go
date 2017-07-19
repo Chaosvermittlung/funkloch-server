@@ -24,7 +24,11 @@ func getUserRouter(prefix string) *interpose.Middleware {
 }
 
 func getCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
-	token, _ := getTokenfromRequest(r)
+	token, err := getTokenfromRequest(r)
+	if err != nil {
+		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
+		return
+	}
 
 	un, err := getUserfromToken(token)
 	if err != nil {
@@ -43,7 +47,11 @@ func getCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func patchCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
-	token, _ := getTokenfromRequest(r)
+	token, err := getTokenfromRequest(r)
+	if err != nil {
+		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
+		return
+	}
 
 	ou, err := getUserfromToken(token)
 	if err != nil {
@@ -142,7 +150,11 @@ func postUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserHandler(w http.ResponseWriter, r *http.Request) {
-	token, _ := getTokenfromRequest(r)
+	token, err := getTokenfromRequest(r)
+	if err != nil {
+		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
+		return
+	}
 
 	ou, err := getUserfromToken(token)
 	if err != nil {
