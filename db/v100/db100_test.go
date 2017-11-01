@@ -307,6 +307,9 @@ func TestStoreItemInsert(t *testing.T) {
 	if si.StoreItemID != 1 {
 		t.Errorf("Expected StoreItemID = 1 but got %v", si.StoreItemID)
 	}
+	if si.Code != 2000000000015 {
+		t.Errorf("Expected Code = 2000000000015 but got %v", si.Code)
+	}
 }
 
 func TestStoreItemGetDetails(t *testing.T) {
@@ -320,6 +323,9 @@ func TestStoreItemGetDetails(t *testing.T) {
 	}
 	if si.EquipmentID != 2 {
 		t.Errorf("Expected EquipmentID = 2 but got %v", si.EquipmentID)
+	}
+	if si.Code != 2000000000015 {
+		t.Errorf("Expected Code = 2000000000015 but got %v", si.Code)
 	}
 }
 

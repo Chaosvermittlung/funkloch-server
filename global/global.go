@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"golang.org/x/crypto/scrypt"
 )
@@ -74,4 +75,41 @@ func GenerateSalt() (string, error) {
 	buf := make([]byte, saltSize)
 	_, err := io.ReadFull(rand.Reader, buf)
 	return string(buf), err
+}
+
+func CreateEAN13(id int) string {
+	res := "2"
+	ids := strconv.Itoa(id)
+	for i := 1; i < (12 - len(ids)); i++ {
+		res = res + "0"
+	}
+	res = res + ids
+	c := calculateCheckDigit(res)
+	return res + c
+}
+
+func calculateCheckDigit(num string) string {
+	sum := 0
+	multiplier := 1
+	for _, d := range num {
+		di, err := strconv.Atoi(string(d))
+		if err != nil {
+			return ""
+		}
+		sum += di * multiplier
+		if multiplier == 3 {
+			multiplier = 1
+		} else {
+			multiplier = 3
+		}
+	}
+	return mod(-sum, 10)
+}
+
+func mod(x int, y int) string {
+	result := x % y
+	if result < 0 {
+		result += y
+	}
+	return strconv.Itoa(result)
 }

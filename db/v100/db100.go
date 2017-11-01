@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Chaosvermittlung/funkloch-server/global"
@@ -263,10 +264,11 @@ type StoreItem struct {
 	StoreItemID int
 	StoreID     int
 	EquipmentID int
+	Code        int
 }
 
 func (s *StoreItem) Insert() error {
-	res, err := db.Exec("Insert Into Storeitem (StoreID, EquipmentID) Values (?,?)", s.StoreID, s.EquipmentID)
+	res, err := db.Exec("Insert Into Storeitem (StoreID, EquipmentID, Code) Values (?,?,?)", s.StoreID, s.EquipmentID, s.Code)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -277,6 +279,15 @@ func (s *StoreItem) Insert() error {
 		return err
 	}
 	s.StoreItemID = int(id)
+	tmp, err := strconv.Atoi(global.CreateEAN13(s.StoreItemID))
+	if err != nil {
+		return err
+	}
+	s.Code = tmp
+	err = s.Update()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -286,7 +297,7 @@ func (s *StoreItem) GetDetails() error {
 }
 
 func (s *StoreItem) Update() error {
-	_, err := db.Exec("Update StoreItem SET StoreID = ?, EquipmentID = ? where StoreItemID = ?", s.StoreID, s.EquipmentID, s.StoreItemID)
+	_, err := db.Exec("Update StoreItem SET StoreID = ?, EquipmentID = ?, Code = ? where StoreItemID = ?", s.StoreID, s.EquipmentID, s.Code, s.StoreItemID)
 	return err
 }
 
