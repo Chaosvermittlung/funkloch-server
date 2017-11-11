@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/carbocation/interpose"
 	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )
 
@@ -17,6 +17,7 @@ func getStoreItemRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", getStoreItemHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchStoreItemHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteStoreItemHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/fault", getStoreItemFaultsHandler).Methods("GET")
 	return m
 }
 
@@ -174,4 +175,33 @@ func deleteStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error deleting StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
+}
+
+func getStoreItemFaultsHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	s := db100.StoreItem{StoreItemID: id}
+	ff, err := s.GetFaults()
+	if err != nil {
+		apierror(w, r, "Error getting Faults for Item: "+err.Error(), http.StatusBadRequest, ERROR_DBQUERYFAILED)
+		return
+	}
+	j, err := json.Marshal(&ff)
+	if err != nil {
+		apierror(w, r, "Error Marshaling json: "+err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
 }
