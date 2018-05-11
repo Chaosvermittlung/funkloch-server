@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/carbocation/interpose"
 	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )
 
@@ -59,7 +59,19 @@ func listFaultsHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error fetching Faults: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	j, err := json.Marshal(&ff)
+	var res []faultResponse
+	for _, f := range ff {
+		var fr faultResponse
+		fr.Fault = f
+		fr.StoreItem.StoreItemID = f.StoreItemID
+		err = fr.StoreItem.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching Fault StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		res = append(res, fr)
+	}
+	j, err := json.Marshal(&res)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
 		return

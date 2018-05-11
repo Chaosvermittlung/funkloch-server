@@ -43,3 +43,8 @@ type packinglistItemsResponse struct {
 	Equipment   db100.Equipment
 	Store       db100.Store
 }
+
+type faultResponse struct {
+	StoreItem db100.StoreItem
+	Fault     db100.Fault
+}
