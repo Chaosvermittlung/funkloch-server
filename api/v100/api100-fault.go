@@ -63,12 +63,22 @@ func listFaultsHandler(w http.ResponseWriter, r *http.Request) {
 	for _, f := range ff {
 		var fr faultResponse
 		fr.Fault = f
-		fr.StoreItem.StoreItemID = f.StoreItemID
-		err = fr.StoreItem.GetDetails()
+		var si db100.StoreItem
+		si.StoreItemID = f.StoreItemID
+		err = si.GetDetails()
 		if err != nil {
 			apierror(w, r, "Error fetching Fault StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 			return
 		}
+		fr.Code = si.Code
+		var eq db100.Equipment
+		eq.EquipmentID = si.EquipmentID
+		err = eq.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching Fault Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		fr.Name = eq.Name
 		res = append(res, fr)
 	}
 	j, err := json.Marshal(&res)

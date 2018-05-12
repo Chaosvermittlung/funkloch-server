@@ -45,6 +45,7 @@ type packinglistItemsResponse struct {
 }
 
 type faultResponse struct {
-	StoreItem db100.StoreItem
-	Fault     db100.Fault
+	Fault db100.Fault
+	Code  int
+	Name  string
 }
