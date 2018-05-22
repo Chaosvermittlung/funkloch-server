@@ -1,22 +1,21 @@
 package db100
 
 import (
-	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/Chaosvermittlung/funkloch-server/global"
-	"github.com/jmoiron/sqlx"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sqlx.DB
+var db *gorm.DB
 
 func Initialisation(dbc *global.DBConnection) {
 	var err error
-	db, err = sqlx.Open(dbc.Driver, dbc.Connection)
+	db, err = gorm.Open(dbc.Driver, dbc.Connection)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,25 +23,30 @@ func Initialisation(dbc *global.DBConnection) {
 }
 
 func initDB(dbc *global.DBConnection) {
+	var cont bool
 	switch dbc.Driver {
 	case "sqlite3":
-		cont, err := global.Exists(dbc.Connection)
+		var err error
+		cont, err = global.Exists(dbc.Connection)
 		if err != nil {
 			log.Fatal(err)
 		}
-		if cont {
-			fmt.Println("cont")
-			return
-		}
-		_, err = os.Create(dbc.Connection)
-		if err != nil {
-			log.Fatal("Could not create file "+dbc.Connection, err)
-		}
-		_, err = db.Exec(createSQLlitestmt)
-		if err != nil {
-			log.Printf("%q: %s\n", err, createSQLlitestmt)
-			return
-		}
+
+	default:
+		log.Fatal("DB Driver unkown. Stopping Server")
+	}
+	if !cont {
+		db.AutoMigrate(&User{})
+		db.AutoMigrate(&Store{})
+		db.AutoMigrate(&Equipment{})
+		db.AutoMigrate(&Box{})
+		db.AutoMigrate(&Item{})
+		db.AutoMigrate(&Event{})
+		db.AutoMigrate(&Packinglist{})
+		db.AutoMigrate(&Participant{})
+		db.AutoMigrate(&Wishlist{})
+		db.AutoMigrate(&Fault{})
+
 		var u User
 		u.Username = "admin"
 		u.Password = "admin"
@@ -63,9 +67,9 @@ func initDB(dbc *global.DBConnection) {
 		if err != nil {
 			log.Println(err)
 		}
-	default:
-		log.Fatal("DB Driver unkown. Stopping Server")
+		db.Create(&u)
 	}
+
 }
 
 type UserRight int
@@ -76,7 +80,8 @@ const (
 )
 
 type User struct {
-	UserID   int       `json:"id"`
+	gorm.Model
+	UserID   int       `json:"id";gorm:"primary_key"`
 	Username string    `json:"username"`
 	Password string    `json:"password"`
 	Salt     string    `json:"-"`
@@ -93,26 +98,26 @@ func copyifnotempty(str1, str2 string) string {
 }
 
 func DoesUserExist(username string) (bool, error) {
-	var id int
-	err := db.Get(&id, "Select Count(*) from User Where Username = ?", username)
-	b := (id > 0)
-	return b, err
+	var u User
+	err := db.Where("Username = ?", username).First(&u)
+	b := (u.UserID > 0)
+	return b, err.Error
 }
 
 func GetUsers() ([]User, error) {
 	var u []User
-	err := db.Select(&u, "Select * from User")
-	return u, err
+	err := db.Find(&u)
+	return u, err.Error
 }
 
 func (u *User) GetDetailstoUsername() error {
-	err := db.Get(u, "SELECT * from User Where Username = ? Limit 1", u.Username)
-	return err
+	err := db.Where("Username = ?", u.Username).First(&u)
+	return err.Error
 }
 
 func (u *User) GetDetails() error {
-	err := db.Get(u, "SELECT * from User Where UserID = ? Limit 1", u.UserID)
-	return err
+	err := db.First(&u, u.UserID)
+	return err.Error
 }
 
 func (u *User) Patch(ou User) error {
@@ -132,199 +137,206 @@ func (u *User) Patch(ou User) error {
 }
 
 func (u *User) Update() error {
-	_, err := db.Exec("UPDATE User SET username = ?, password = ?, email = ?, right = ? WHERE Userid = ?", u.Username, u.Password, u.Email, u.Right, u.UserID)
-	return err
+	err := db.Save(&u)
+	return err.Error
 }
 
 func (u *User) Insert() error {
-	res, err := db.Exec("INSERT INTO User (username, password, salt, email, right) VALUES(?,?,?,?,?)", u.Username, u.Password, u.Salt, u.Email, u.Right)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	u.UserID = int(id)
-
-	return nil
+	err := db.Create(&u)
+	return err.Error
 }
 
 func DeleteUser(id int) error {
-	_, err := db.Exec("DELETE FROM User Where UserID = ?", id)
-	return err
+	var u User
+	u.UserID = id
+	err := db.Delete(&u)
+	return err.Error
 }
 
 type Store struct {
-	StoreID int
-	Name    string
-	Adress  string
-	Manager int
+	gorm.Model
+	StoreID   int `gorm:"primary_key"`
+	Name      string
+	Adress    string `gorm:"foreignkey:ManagerID"`
+	Manager   User
+	ManagerID int
 }
 
 func (s *Store) Insert() error {
-	res, err := db.Exec("Insert Into Store (name, adress, manager) Values (?,?,?)", s.Name, s.Adress, s.Manager)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	s.StoreID = int(id)
-	return nil
+	err := db.Create(&s)
+	return err.Error
 }
 
 func GetStores() ([]Store, error) {
 	var s []Store
-	err := db.Select(&s, "Select * from Store")
-	return s, err
+	err := db.Find(&s)
+	return s, err.Error
 }
 
 func (s *Store) GetDetails() error {
-	err := db.Get(s, "SELECT * from Store Where StoreID = ? Limit 1", s.StoreID)
-	return err
+	err := db.First(&s, s.StoreID)
+	return err.Error
 }
 
 func (s *Store) GetManager() (User, error) {
 	var u User
-	u.UserID = s.Manager
-	err := u.GetDetails()
-	return u, err
+	err := db.Model(&s).Related(&u, "Manager")
+	return u, err.Error
 }
 
 func (s *Store) Update() error {
-	_, err := db.Exec("Update Store SET name = ?, adress = ?, manager = ? where StoreID = ?", s.Name, s.Adress, s.Manager, s.StoreID)
-	return err
+	err := db.Save(&s)
+	return err.Error
 }
 
 func (s *Store) Delete() error {
-	_, err := db.Exec("Delete from Store Where StoreID = ?", s.StoreID)
-	return err
+	err := db.Delete(&s)
+	return err.Error
 }
 
-func (s *Store) GetStoreitems() ([]StoreItem, error) {
-	var si []StoreItem
-	err := db.Select(&si, "Select * from StoreItem Where StoreID = ?", s.StoreID)
-	return si, err
-}
-
-func (s *Store) GetItemCount(id int) (int, error) {
-	var i int
-	err := db.Get(&i, "Select Count(*) from StoreItem Where StoreID = ? and EquipmentID = ?", s.StoreID, id)
-	return i, err
+func (s *Store) GetStoreBoxes() ([]Box, error) {
+	var bo []Box
+	err := db.Model(&s).Related(&bo)
+	return bo, err.Error
 }
 
 type Equipment struct {
-	EquipmentID int
+	gorm.Model
+	EquipmentID int `gorm:"primary_key"`
 	Name        string
 }
 
 func (e *Equipment) Insert() error {
-	res, err := db.Exec("Insert Into Equipment (Name) Values (?)", e.Name)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	e.EquipmentID = int(id)
-	return nil
+	err := db.Create(&e)
+	return err.Error
 }
 
 func GetEquipment() ([]Equipment, error) {
 	var e []Equipment
-	err := db.Select(&e, "Select * from Equipment")
-	return e, err
+	err := db.Find(&e)
+	return e, err.Error
 }
 
 func (e *Equipment) GetDetails() error {
-	err := db.Get(e, "SELECT * from Equipment Where EquipmentID = ? Limit 1", e.EquipmentID)
-	return err
+	err := db.First(&e, e.EquipmentID)
+	return err.Error
 }
 
 func (e *Equipment) Update() error {
-	_, err := db.Exec("Update Equipment SET name = ? where EquipmentID = ?", e.Name, e.EquipmentID)
-	return err
+	err := db.Save(&e)
+	return err.Error
 }
 
 func (e *Equipment) Delete() error {
-	_, err := db.Exec("Delete from Equipment Where EquipmentID = ?", e.EquipmentID)
-	return err
+	err := db.Delete(&e)
+	return err.Error
 }
 
-type StoreItem struct {
-	StoreItemID int
-	StoreID     int
-	EquipmentID int
+type Box struct {
+	gorm.Model
+	BoxID       int `gorm:"primary_key"`
+	Store       Store
+	Items       []Item
 	Code        int
+	Description string
 }
 
-func (s *StoreItem) Insert() error {
-	res, err := db.Exec("Insert Into Storeitem (StoreID, EquipmentID, Code) Values (?,?,?)", s.StoreID, s.EquipmentID, s.Code)
-	if err != nil {
-		log.Println(err)
-		return err
+func (b *Box) Insert() error {
+	err := db.Create(&b)
+	tmp, err2 := strconv.Atoi(global.CreateBoxEAN(b.BoxID))
+	if err2 != nil {
+		return err2
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return err
+	b.Code = tmp
+	err = db.Save(&b)
+	return err.Error
+}
+
+func (b *Box) Update() error {
+	err := db.Save(&b)
+	return err.Error
+}
+
+func GetBoxes() ([]Box, error) {
+	var b []Box
+	err := db.Find(&b)
+	return b, err.Error
+}
+
+func (b *Box) GetDetails() error {
+	err := db.First(&b, b.BoxID)
+	return err.Error
+}
+
+func (b *Box) Delete() error {
+	err := db.Delete(b)
+	return err.Error
+}
+
+func (b *Box) AddStoreItem(item Item) error {
+	err := db.Model(&b).Association("Items").Append(&item)
+	return err.Error
+}
+
+type Item struct {
+	gorm.Model
+	ItemID      int `gorm:"primary_key"`
+	BoxID       int
+	EquipmentID int
+	Equipment   Equipment
+	Code        int
+	Faults      []Fault
+}
+
+func (i Item) Insert() error {
+	err := db.Create(&i)
+	if err.Error != nil {
+		return err.Error
 	}
-	s.StoreItemID = int(id)
-	tmp, err := strconv.Atoi(global.CreateEAN13(s.StoreItemID))
-	if err != nil {
-		return err
+	tmp, err2 := strconv.Atoi(global.CreateItemEAN(i.ItemID))
+	if err2 != nil {
+		return err2
 	}
-	s.Code = tmp
-	err = s.Update()
-	if err != nil {
-		return err
-	}
-	return nil
+	i.Code = tmp
+	err = db.Save(&i)
+	return err.Error
 }
 
-func (s *StoreItem) GetDetails() error {
-	err := db.Get(s, "Select * from StoreItem Where StoreitemID = ? LIMIT 1", s.StoreItemID)
-	return err
+func (i Item) GetDetails() error {
+	err := db.First(&i, i.ItemID)
+	return err.Error
 }
 
-func (s *StoreItem) Update() error {
-	_, err := db.Exec("Update StoreItem SET StoreID = ?, EquipmentID = ?, Code = ? where StoreItemID = ?", s.StoreID, s.EquipmentID, s.Code, s.StoreItemID)
-	return err
+func (i Item) Update() error {
+	err := db.Save(&i)
+	return err.Error
 }
 
-func (s *StoreItem) Delete() error {
-	_, err := db.Exec("Delete from StoreItem Where StoreItemID = ?", s.StoreItemID)
-	return err
+func (i Item) Delete() error {
+	err := db.Delete(&i)
+	return err.Error
 }
 
-func GetStoreItems() ([]StoreItem, error) {
-	var ss []StoreItem
-	err := db.Select(&ss, "Select * from StoreItem")
-	return ss, err
+func GetStoreItems() ([]Item, error) {
+	var ii []Item
+	err := db.Find(&ii)
+	return ii, err.Error
 }
 
-func (s *StoreItem) GetFaults() ([]Fault, error) {
+func (i Item) GetFaults() ([]Fault, error) {
 	var result []Fault
-	err := db.Select(&result, "Select * from Fault Where StoreitemID = ?", s.StoreItemID)
-	return result, err
+	err := db.Model(&i).Related(&result)
+	return result, err.Error
 }
 
-func (s *StoreItem) PostFault(f Fault) (Fault, error) {
+func (i Item) PostFault(f Fault) (Fault, error) {
 	err := f.Insert()
 	return f, err
 }
 
 type Event struct {
-	EventID int
+	gorm.Model
+	EventID int `gorm:"primary_key"`
 	Name    string
 	Start   time.Time
 	End     time.Time
@@ -332,244 +344,157 @@ type Event struct {
 }
 
 func (e *Event) Insert() error {
-	res, err := db.Exec("Insert Into Event (Name, Start, End, Adress) Values (?, ?, ?, ?)", e.Name, e.Start, e.End, e.Adress)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	e.EventID = int(id)
-	return nil
+	err := db.Create(&e)
+	return err.Error
 }
 
 func (e *Event) GetDetails() error {
-	err := db.Get(e, "SELECT * from Event Where EventID = ? Limit 1", e.EventID)
-	return err
+	err := db.First(&e, e.EventID)
+	return err.Error
 }
 
 func (e *Event) Update() error {
-	_, err := db.Exec("Update Event SET Name = ?, Start = ?, End = ?, Adress = ? where EventID = ?", e.Name, e.Start, e.End, e.Adress, e.EventID)
-	return err
+	err := db.Save(&e)
+	return err.Error
 }
 
 func (e *Event) Delete() error {
-	_, err := db.Exec("Delete from Event Where EventID = ?", e.EventID)
-	return err
+	err := db.Delete(&e)
+	return err.Error
 }
 
 func (e *Event) GetParticipants() ([]Participant, error) {
 	var pp []Participant
-	err := db.Select(&pp, "Select * from Participant Where EventID = ?", e.EventID)
-	return pp, err
+	err := db.Model(&e).Related(&pp)
+	return pp, err.Error
 }
 
 func (e *Event) GetPackinglists() ([]Packinglist, error) {
 	var pp []Packinglist
-	err := db.Select(&pp, "Select * from Packinglist Where EventID = ?", e.EventID)
-	return pp, err
+	err := db.Model(&e).Related(&pp)
+	return pp, err.Error
 }
 
 func GetEvents() ([]Event, error) {
 	var e []Event
-	err := db.Select(&e, "Select * from Event")
-	return e, err
+	err := db.Find(&e)
+	return e, err.Error
 }
 
 func GetNextEvent() (Event, error) {
 	var e Event
-	err := db.Get(&e, "Select * from Event where start > ? Order by start ASC Limit 1", time.Now())
-	return e, err
+	err := db.Where("start > ?", time.Now()).Order("start asc").First(&e)
+	return e, err.Error
 }
 
 type Packinglist struct {
-	PackinglistID int
+	gorm.Model
+	PackinglistID int `gorm:"primary_key"`
 	Name          string
 	EventID       int
+	Event         Event
+	Boxes         []Box `gorm:"many2many:packinglist_boxes;"`
 }
 
 func (p *Packinglist) Insert() error {
-	res, err := db.Exec("Insert Into Packinglist (Name, EventID) Values (?, ?)", p.Name, p.EventID)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	p.PackinglistID = int(id)
-	return nil
+	err := db.Create(&p)
+	return err.Error
 }
 
 func GetPackinglists() ([]Packinglist, error) {
 	var p []Packinglist
-	err := db.Select(&p, "Select * from Packinglist")
-	return p, err
+	err := db.Find(&p)
+	return p, err.Error
 }
 
 func (p *Packinglist) GetDetails() error {
-	err := db.Get(p, "Select * from Packinglist Where PackinglistID = ? LIMIT 1", p.PackinglistID)
-	return err
+	err := db.First(&p, p.PackinglistID)
+	return err.Error
 }
 
 func (p *Packinglist) Update() error {
-	_, err := db.Exec("Update Packinglist SET name = ?, EventID = ? where PackinglistID = ?", p.Name, p.EventID, p.PackinglistID)
-	return err
+	err := db.Save(&p)
+	return err.Error
 }
 
-func (p *Packinglist) GetItems() ([]StoreItem, error) {
-	var plis []PackinglistItem
-	var res []StoreItem
-	err := db.Select(&plis, "Select * from PackinglistItem Where PackinglistID = ?", p.PackinglistID)
-	if err != nil {
-		return res, err
-	}
-	for _, pli := range plis {
-		var si StoreItem
-		err := db.Get(&si, "Select * from StoreItem Where StoreItemID = ?", pli.StoreitemID)
-		if err != nil {
-			return res, err
-		}
-		res = append(res, si)
-	}
-	return res, nil
+func (p *Packinglist) GetBoxes() ([]Box, error) {
+	var res []Box
+	err := db.Model(&p).Related(&res)
+	return res, err.Error
 }
 
 func (p *Packinglist) Delete() error {
-	_, err := db.Exec("Delete from Packinglist Where PackinglistID = ?", p.PackinglistID)
-	return err
-}
-
-type PackinglistItem struct {
-	PackinglistID int
-	StoreitemID   int
-}
-
-func (p *PackinglistItem) Insert() error {
-	_, err := db.Exec("Insert Into PackinglistItem (PackinglistID, StoreitemID) Values (?, ?)", p.PackinglistID, p.StoreitemID)
-	return err
-}
-
-func (p *PackinglistItem) Delete() error {
-	_, err := db.Exec("Delete from PackinglistItem Where PackinglistID = ? and StoreitemID = ?", p.PackinglistID, p.StoreitemID)
-	return err
+	err := db.Delete(&p)
+	return err.Error
 }
 
 type Participant struct {
-	UserID    int
-	EventID   int
+	gorm.Model
+	UserID    int `gorm:"primary_key"`
+	User      User
+	EventID   int `gorm:"primary_key"`
+	Event     Event
 	Arrival   time.Time
 	Departure time.Time
 }
 
 func (p *Participant) Insert() error {
-	_, err := db.Exec("Insert Into Participant (UserID, EventID, Arrival, Departure) Values (?, ?, ?, ?)", p.UserID, p.EventID, p.Arrival, p.Departure)
-	return err
+	err := db.Create(&p)
+	return err.Error
 }
 
 func (p *Participant) Update() error {
-	_, err := db.Exec("Update Participant SET Arrival = ?, Departure = ? where UserID = ? and EventID = ?", p.Arrival, p.Departure, p.UserID, p.EventID)
-	return err
+	err := db.Save(&p)
+	return err.Error
 }
 
 func (p *Participant) Delete() error {
-	_, err := db.Exec("Delete from Participant Where UserID = ? and EventID = ?", p.UserID, p.EventID)
-	return err
+	err := db.Delete(&p)
+	return err.Error
 }
 
 func (p *Participant) GetDetails() error {
-	err := db.Get(p, "Select * from Participant Where UserID = ? and EventID = ? LIMIT 1", p.UserID, p.EventID)
-	return err
+	err := db.Where("UserID = ? and EventID = ?", p.UserID, p.EventID).First(&p)
+	return err.Error
 }
 
 type Wishlist struct {
-	WishlistID int
+	gorm.Model
+	WishlistID int `gorm:"primary_key"`
 	Name       string
+	Items      []Equipment `gorm:"many2many:wishlist_equipment;"`
 }
 
 func (w *Wishlist) Insert() error {
-	res, err := db.Exec("Insert Into Wishlist (Name) Values (?)", w.Name)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	w.WishlistID = int(id)
-	return nil
+	err := db.Create(&w)
+	return err.Error
 }
 
 func GetWishlists() ([]Wishlist, error) {
 	var ww []Wishlist
-	err := db.Select(&ww, "Select * from Wishlist")
-	return ww, err
+	err := db.Find(&ww)
+	return ww, err.Error
 }
 
 func (w *Wishlist) Update() error {
-	_, err := db.Exec("Update Wishlist SET name = ? where WishlistID = ?", w.Name, w.WishlistID)
-	return err
+	err := db.Save(&w)
+	return err.Error
 }
 
 func (w *Wishlist) Delete() error {
-	_, err := db.Exec("Delete from Wishlist Where WishlistID = ?", w.WishlistID)
-	return err
+	err := db.Delete(&w)
+	return err.Error
 }
 
-func (p *Wishlist) GetDetails() error {
-	err := db.Get(p, "Select * from Wishlist Where WishlistID = ? LIMIT 1", p.WishlistID)
-	return err
+func (w *Wishlist) GetDetails() error {
+	err := db.First(&w, w.WishlistID)
+	return err.Error
 }
 
-func (p *Wishlist) GetItems() ([]Equipment, error) {
-	var wlis []Wishlistitem
+func (w *Wishlist) GetItems() ([]Equipment, error) {
 	var res []Equipment
-	err := db.Select(&wlis, "Select * from WishlistItem Where WishlistID = ?", p.WishlistID)
-	if err != nil {
-		return res, err
-	}
-	for _, wli := range wlis {
-		var e Equipment
-		err := db.Get(&e, "Select * from Equipment Where EquipmentID = ?", wli.EquipmentID)
-		if err != nil {
-			return res, err
-		}
-		res = append(res, e)
-	}
-	return res, nil
-}
-
-type Wishlistitem struct {
-	WishlistID  int
-	EquipmentID int
-	Count       int
-}
-
-func (p *Wishlistitem) Insert() error {
-	_, err := db.Exec("Insert Into Wishlistitem (WishlistID, EquipmentID, Count) Values (?, ?, ?)", p.WishlistID, p.EquipmentID, p.Count)
-	return err
-}
-
-func (p *Wishlistitem) Update() error {
-	_, err := db.Exec("Update Wishlistitem Set Count = ? where WishlistID = ? and EquipmentID = ?", p.Count, p.WishlistID, p.EquipmentID)
-	return err
-}
-
-func (p *Wishlistitem) GetDetails() error {
-	err := db.Get(p, "Select * from Wishlistitem where WishlistID = ? and EquipmentID = ? Limit 1", p.WishlistID, p.EquipmentID)
-	return err
-}
-
-func (p *Wishlistitem) Delete() error {
-	_, err := db.Exec("Delete from Wishlistitem Where WishlistID = ? and EquipmentID = ?", p.WishlistID, p.EquipmentID)
-	return err
+	err := db.Model(&w).Related(&res)
+	return res, err.Error
 }
 
 type FaultStatus int
@@ -582,44 +507,35 @@ const (
 )
 
 type Fault struct {
-	FaultID     int
-	StoreItemID int
-	Status      FaultStatus
-	Comment     string
+	gorm.Model
+	FaultID int `gorm:"primary_key"`
+	ItemID  int
+	Status  FaultStatus
+	Comment string
 }
 
 func (f *Fault) Insert() error {
-	res, err := db.Exec("Insert Into Fault (StoreItemId, Status, Comment) Values (?, ?, ?)", f.StoreItemID, f.Status, f.Comment)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	f.FaultID = int(id)
-	return nil
+	err := db.Create(&f)
+	return err.Error
 }
 
 func GetFaults() ([]Fault, error) {
 	var f []Fault
-	err := db.Select(&f, "Select * from Fault")
-	return f, err
+	err := db.Find(&f)
+	return f, err.Error
 }
 
 func (f *Fault) Update() error {
-	_, err := db.Exec("Update Fault SET Status = ?, Comment = ? where FaultID = ?", f.Status, f.Comment, f.FaultID)
-	return err
+	err := db.Save(&f)
+	return err.Error
 }
 
 func (f *Fault) Delete() error {
-	_, err := db.Exec("Delete from Fault Where FaultID = ?", f.FaultID)
-	return err
+	err := db.Delete(&f)
+	return err.Error
 }
 
 func (f *Fault) GetDetails() error {
-	err := db.Get(f, "Select * from Fault where FaultId = ? Limit 1", f.FaultID)
-	return err
+	err := db.First(&f, f.FaultID)
+	return err.Error
 }

@@ -19,6 +19,9 @@ var Conf Config
 
 const saltSize = 32
 
+const storeItemPrefix = 200
+const boxPrefix = 202
+
 type DBConnection struct {
 	Driver     string
 	Connection string
@@ -77,10 +80,18 @@ func GenerateSalt() (string, error) {
 	return string(buf), err
 }
 
-func CreateEAN13(id int) string {
-	res := "2"
+func CreateItemEAN(id int) string {
+	return CreateEAN13(storeItemPrefix, id)
+}
+
+func CreateBoxEAN(id int) string {
+	return CreateEAN13(boxPrefix, id)
+}
+
+func CreateEAN13(prefix, id int) string {
+	res := strconv.Itoa(prefix)
 	ids := strconv.Itoa(id)
-	for i := 1; i < (12 - len(ids)); i++ {
+	for i := 1; i < ((12 - len(res)) - len(ids)); i++ {
 		res = res + "0"
 	}
 	res = res + ids
