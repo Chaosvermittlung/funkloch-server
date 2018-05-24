@@ -91,7 +91,8 @@ func CreateBoxEAN(id int) string {
 func CreateEAN13(prefix, id int) string {
 	res := strconv.Itoa(prefix)
 	ids := strconv.Itoa(id)
-	for i := 1; i < ((12 - len(res)) - len(ids)); i++ {
+	zerocount := 12 - (len(res) + len(ids))
+	for i := 0; i < zerocount; i++ {
 		res = res + "0"
 	}
 	res = res + ids
