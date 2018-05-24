@@ -6,8 +6,8 @@ import (
 
 	"strconv"
 
-	"github.com/carbocation/interpose"
 	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )
 
@@ -19,9 +19,6 @@ func getStoreRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}/Manager", getStoreManagerHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchStoreHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteStoreHandler).Methods("DELETE")
-	r.HandleFunc("/{ID}/Items", getStoreItemsHandler).Methods("GET")
-	r.HandleFunc("/{ID}/ItemCount", getStoreItemCountHandler).Methods("GET")
-	r.HandleFunc("/{ID}/NewItem", insertNewStoreItem).Methods("POST")
 
 	return m
 }
@@ -178,115 +175,4 @@ func deleteStoreHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error deleting Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-}
-
-func getStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	i := vars["ID"]
-	id, err := strconv.Atoi(i)
-	if err != nil {
-		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
-		return
-	}
-	s := db100.Store{StoreID: id}
-	ii, err := s.GetStoreitems()
-	if err != nil {
-		apierror(w, r, "Error fetching Store Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-		return
-	}
-
-	var result []db100.Equipment
-
-	for _, si := range ii {
-		e := db100.Equipment{EquipmentID: si.EquipmentID}
-		err := e.GetDetails()
-		if err != nil {
-			apierror(w, r, "Error fetching Item Details: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-			return
-		}
-		e.EquipmentID = si.StoreItemID
-		result = append(result, e)
-	}
-
-	j, err := json.Marshal(&result)
-	if err != nil {
-		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(j)
-}
-
-func getStoreItemCountHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	i := vars["ID"]
-	id, err := strconv.Atoi(i)
-	if err != nil {
-		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
-		return
-	}
-	s := db100.Store{StoreID: id}
-	ii, err := s.GetStoreitems()
-	if err != nil {
-		apierror(w, r, "Error fetching Store Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-		return
-	}
-	m := make(map[int]int)
-
-	for _, si := range ii {
-		m[si.EquipmentID] = m[si.EquipmentID] + 1
-	}
-
-	var result []storeItemCountResponse
-	for eid, ecount := range m {
-		e := db100.Equipment{EquipmentID: eid}
-		err := e.GetDetails()
-		if err != nil {
-			apierror(w, r, "Error fetching Item Details: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-			return
-		}
-		stcr := storeItemCountResponse{Name: e.Name, Count: ecount}
-		result = append(result, stcr)
-	}
-
-	j, err := json.Marshal(&result)
-	if err != nil {
-		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(j)
-}
-
-func insertNewStoreItem(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	i := vars["ID"]
-	id, err := strconv.Atoi(i)
-	if err != nil {
-		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
-		return
-	}
-	decoder := json.NewDecoder(r.Body)
-	var si db100.StoreItem
-	err = decoder.Decode(&si)
-	if err != nil {
-		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
-		return
-	}
-	si.StoreID = id
-	err = si.Insert()
-	if err != nil {
-		apierror(w, r, "Error while inserting Storeitem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-		return
-	}
-	j, err := json.Marshal(&si)
-	if err != nil {
-		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(j)
 }

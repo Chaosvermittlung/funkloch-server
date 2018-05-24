@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/carbocation/interpose"
 	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )
 
@@ -17,9 +17,9 @@ func getWishlistRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", getWishlistHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchWishlistHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteWishlistHandler).Methods("DELETE")
-	r.HandleFunc("/{ID}/Items", getWishlistItemsHandler).Methods("GET")
+	/*r.HandleFunc("/{ID}/Items", getWishlistItemsHandler).Methods("GET")
 	r.HandleFunc("/{ID}/Item/{IID}/{Count}", addWishlistItemHandler).Methods("POST")
-	r.HandleFunc("/{ID}/Item/{IID}", removeWishlistItemHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/Item/{IID}", removeWishlistItemHandler).Methods("DELETE")*/
 	return m
 }
 
@@ -148,6 +148,7 @@ func deleteWishlistHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*
 func addWishlistItemHandler(w http.ResponseWriter, r *http.Request) {
 	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
 	if err != nil {
@@ -221,7 +222,7 @@ func getWishlistItemsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	wi := db100.Wishlist{WishlistID: id}
-	ee, err := wi.GetItems()
+	ee, err := wi.GetWishlistItems()
 	if err != nil {
 		apierror(w, r, "Error fetching Wishlistitems: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
@@ -246,3 +247,4 @@ func getWishlistItemsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(j)
 }
+*/

@@ -10,36 +10,36 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func getStoreItemRouter(prefix string) *interpose.Middleware {
+func getItemRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
-	r.HandleFunc("/", postStoreItemHandler).Methods("POST")
-	r.HandleFunc("/list", listStoreItemsHandler).Methods("GET")
-	r.HandleFunc("/{ID}", getStoreItemHandler).Methods("GET")
-	r.HandleFunc("/{ID}", patchStoreItemHandler).Methods("PATCH")
-	r.HandleFunc("/{ID}", deleteStoreItemHandler).Methods("DELETE")
-	r.HandleFunc("/{ID}/fault", getStoreItemFaultsHandler).Methods("GET")
+	r.HandleFunc("/", postItemHandler).Methods("POST")
+	r.HandleFunc("/list", listItemsHandler).Methods("GET")
+	r.HandleFunc("/{ID}", getItemHandler).Methods("GET")
+	r.HandleFunc("/{ID}", patchItemHandler).Methods("PATCH")
+	r.HandleFunc("/{ID}", deleteItemHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/fault", getItemFaultsHandler).Methods("GET")
 	return m
 }
 
-func postStoreItemHandler(w http.ResponseWriter, r *http.Request) {
+func postItemHandler(w http.ResponseWriter, r *http.Request) {
 	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
 		return
 	}
 	decoder := json.NewDecoder(r.Body)
-	var s db100.StoreItem
-	err = decoder.Decode(&s)
+	var i db100.Item
+	err = decoder.Decode(&i)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
 		return
 	}
-	err = s.Insert()
+	err = i.Insert()
 	if err != nil {
 		apierror(w, r, "Error Inserting Storeitem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	j, err := json.Marshal(&s)
+	j, err := json.Marshal(&i)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
 		return
@@ -49,26 +49,32 @@ func postStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func listStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
-	ss, err := db100.GetStoreItems()
+func listItemsHandler(w http.ResponseWriter, r *http.Request) {
+	ss, err := db100.GetItems()
 	if err != nil {
 		apierror(w, r, "Error fetching StoreItems: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	var res []storeItemResponse
+	var res []itemResponse
 	for _, s := range ss {
-		var sir storeItemResponse
-		sir.StoreItem = s
+		var sir itemResponse
+		sir.Item = s
 		sir.Equipment.EquipmentID = s.EquipmentID
 		err = sir.Equipment.GetDetails()
 		if err != nil {
-			apierror(w, r, "Error fetching StoreItem Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			apierror(w, r, "Error fetching Item Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 			return
 		}
-		sir.Store.StoreID = s.StoreID
+		sir.Box.BoxID = s.BoxID
+		err = sir.Box.GetDetails()
+		if err != nil {
+			apierror(w, r, "Error fetching Item Box: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			return
+		}
+		sir.Store.StoreID = sir.Box.StoreID
 		err = sir.Store.GetDetails()
 		if err != nil {
-			apierror(w, r, "Error fetching StoreItem Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+			apierror(w, r, "Error fetching Item Box Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 			return
 		}
 		res = append(res, sir)
@@ -83,7 +89,7 @@ func listStoreItemsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func getStoreItemHandler(w http.ResponseWriter, r *http.Request) {
+func getItemHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	i := vars["ID"]
 	id, err := strconv.Atoi(i)
@@ -91,23 +97,29 @@ func getStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
-	var sir storeItemResponse
-	sir.StoreItem.StoreItemID = id
-	err = sir.StoreItem.GetDetails()
+	var sir itemResponse
+	sir.Item.ItemID = id
+	err = sir.Item.GetDetails()
 	if err != nil {
-		apierror(w, r, "Error fetching StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error fetching Item: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	sir.Store.StoreID = sir.StoreItem.StoreID
+	sir.Box.BoxID = sir.Item.BoxID
+	err = sir.Box.GetDetails()
+	if err != nil {
+		apierror(w, r, "Error fetching Item Box: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	sir.Store.StoreID = sir.Box.StoreID
 	err = sir.Store.GetDetails()
 	if err != nil {
-		apierror(w, r, "Error fetching StoreItem Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error fetching Item Box Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	sir.Equipment.EquipmentID = sir.StoreItem.EquipmentID
+	sir.Equipment.EquipmentID = sir.Item.EquipmentID
 	err = sir.Equipment.GetDetails()
 	if err != nil {
-		apierror(w, r, "Error fetching StoreItem Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error fetching Item Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 	j, err := json.Marshal(&sir)
@@ -120,7 +132,7 @@ func getStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func patchStoreItemHandler(w http.ResponseWriter, r *http.Request) {
+func patchItemHandler(w http.ResponseWriter, r *http.Request) {
 	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
@@ -134,13 +146,13 @@ func patchStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	decoder := json.NewDecoder(r.Body)
-	var si db100.StoreItem
+	var si db100.Item
 	err = decoder.Decode(&si)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusBadRequest, ERROR_JSONERROR)
 		return
 	}
-	si.StoreItemID = id
+	si.ItemID = id
 	err = si.Update()
 	if err != nil {
 		apierror(w, r, "Error updating Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
@@ -156,7 +168,7 @@ func patchStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(j)
 }
 
-func deleteStoreItemHandler(w http.ResponseWriter, r *http.Request) {
+func deleteItemHandler(w http.ResponseWriter, r *http.Request) {
 	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
@@ -169,7 +181,7 @@ func deleteStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
-	s := db100.StoreItem{StoreItemID: id}
+	s := db100.Item{ItemID: id}
 	err = s.Delete()
 	if err != nil {
 		apierror(w, r, "Error deleting StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
@@ -177,7 +189,7 @@ func deleteStoreItemHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getStoreItemFaultsHandler(w http.ResponseWriter, r *http.Request) {
+func getItemFaultsHandler(w http.ResponseWriter, r *http.Request) {
 	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
@@ -190,7 +202,7 @@ func getStoreItemFaultsHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
-	s := db100.StoreItem{StoreItemID: id}
+	s := db100.Item{ItemID: id}
 	ff, err := s.GetFaults()
 	if err != nil {
 		apierror(w, r, "Error getting Faults for Item: "+err.Error(), http.StatusBadRequest, ERROR_DBQUERYFAILED)

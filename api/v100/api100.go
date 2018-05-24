@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/carbocation/interpose"
 	"github.com/Chaosvermittlung/funkloch-server/db/v100"
 	"github.com/Chaosvermittlung/funkloch-server/global"
+	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 	jwt "gopkg.in/dgrijalva/jwt-go.v2"
 )
@@ -31,8 +31,8 @@ func GetSubrouter(prefix string) *interpose.Middleware {
 	a100user := getUserRouter(prefix + "/user")
 	a100.PathPrefix("/user").Handler(a100user)
 
-	a100storeitem := getStoreItemRouter(prefix + "/storeitem")
-	a100.PathPrefix("/storeitem").Handler(a100storeitem)
+	a100item := getItemRouter(prefix + "/item")
+	a100.PathPrefix("/item").Handler(a100item)
 
 	a100store := getStoreRouter(prefix + "/store")
 	a100.PathPrefix("/store").Handler(a100store)
