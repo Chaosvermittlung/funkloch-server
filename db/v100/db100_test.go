@@ -3,6 +3,7 @@ package db100
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"time"
@@ -15,20 +16,21 @@ func TestMain(m *testing.M) {
 	con.Driver = "sqlite3"
 	con.Connection = "./test.db"
 	os.Remove(con.Connection)
-
+	abs, _ := filepath.Abs(con.Connection)
+	log.Println("Test Database Path:", abs)
 	Initialisation(&con)
 	exit := m.Run()
 
-	err := os.Remove(con.Connection)
+	/*err := os.Remove(con.Connection)
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
 	os.Exit(exit)
 }
 
 func TestUserInsert(t *testing.T) {
 
-	u := User{UserID: -1, Username: "test", Password: "test", Email: "test@test", Right: USERRIGHT_ADMIN}
+	u := User{Username: "test", Password: "test", Email: "test@test", Right: USERRIGHT_ADMIN}
 	s, err := global.GenerateSalt()
 	if err != nil {
 		t.Fatalf("No error expected but got %v", err)
@@ -107,8 +109,8 @@ func TestGetUserDetails(t *testing.T) {
 }
 
 func TestPatchUser(t *testing.T) {
-	u := User{UserID: -1, Username: "test", Password: "test", Email: "test@test", Right: USERRIGHT_ADMIN}
-	un := User{UserID: -1, Username: "test", Password: "test", Email: "test@otherhost", Right: USERRIGHT_MEMBER}
+	u := User{Username: "test", Password: "test", Email: "test@test", Right: USERRIGHT_ADMIN}
+	un := User{Username: "test", Password: "test", Email: "test@otherhost", Right: USERRIGHT_MEMBER}
 
 	err := u.Patch(un)
 
@@ -159,8 +161,14 @@ func TestDeleteUser(t *testing.T) {
 }
 
 func TestStoreInsert(t *testing.T) {
-	s := Store{StoreID: -1, Name: "foobar", Adress: "test", Manager: 1}
-	err := s.Insert()
+	var m User
+	m.UserID = 1
+	err := m.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	s := Store{Name: "foobar", Adress: "test", Manager: m, ManagerID: 1}
+	err = s.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
@@ -189,7 +197,7 @@ func TestStoreGetDetails(t *testing.T) {
 	if s.Name != "foobar" {
 		t.Errorf("Expected Name = foobar but got %v", s.Name)
 	}
-	if s.Manager != 1 {
+	if s.ManagerID != 1 {
 		t.Errorf("Expected Manager = 1 but got %v", s.Manager)
 	}
 	if s.Adress != "test" {
@@ -198,7 +206,7 @@ func TestStoreGetDetails(t *testing.T) {
 }
 
 func TestStoreUpdate(t *testing.T) {
-	s := Store{StoreID: 1, Name: "foobar2", Adress: "test2", Manager: 1}
+	s := Store{StoreID: 1, Name: "foobar2", Adress: "test2", ManagerID: 1}
 	sn := Store{StoreID: 1}
 	err := s.Update()
 	if err != nil {
@@ -243,7 +251,7 @@ func TestStoreDelete(t *testing.T) {
 }
 
 func TestEquipmentInsert(t *testing.T) {
-	e := Equipment{EquipmentID: -1, Name: "FF54"}
+	e := Equipment{Name: "FF54"}
 	err := e.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -261,6 +269,16 @@ func TestEquipmentGetDetails(t *testing.T) {
 	}
 	if e.Name != "FF54" {
 		t.Error("Expected Name = FF54 but got", e.Name)
+	}
+}
+
+func TestGetEquipment(t *testing.T) {
+	res, err := GetEquipment()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(res) < 1 {
+		t.Errorf("Expected len > 1 got %v", len(res))
 	}
 }
 
@@ -288,9 +306,108 @@ func TestEquipmentDelete(t *testing.T) {
 	}
 }
 
-func TestStoreItemInsert(t *testing.T) {
-	e := Equipment{EquipmentID: -1, Name: "FF54"}
-	s := Store{StoreID: -1, Name: "foobar", Adress: "test", Manager: 1}
+func TestBoxInsert(t *testing.T) {
+	s := Store{Name: "foobar", Adress: "test", ManagerID: 1}
+	err := s.Insert()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	b := Box{StoreID: s.StoreID, Description: "TestBox"}
+	err = b.Insert()
+	if b.BoxID != 1 {
+		t.Errorf("Expected BoxID = 1 but got %v", b.BoxID)
+	}
+	if b.Code != 2020000000013 {
+		t.Errorf("Expected Code = 2020000000013 but got %v", b.Code)
+	}
+}
+
+func TestGetBoxes(t *testing.T) {
+	bb, err := GetBoxes()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(bb) != 1 {
+		t.Errorf("Expected len = 1 got %v", len(bb))
+	}
+}
+
+func TestBoxGetDetails(t *testing.T) {
+	b := Box{BoxID: 1}
+	err := b.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if b.StoreID != 2 {
+		t.Error("Expected StoreID = 2 but got", b.StoreID)
+	}
+	if b.Code != 2020000000013 {
+		t.Error("Expected Code = 2020000000013 but got", b.StoreID)
+	}
+	if b.Description != "TestBox" {
+		t.Error("Expected Name = TestBox but got", b.Description)
+	}
+}
+
+func TestBoxUpdate(t *testing.T) {
+	b := Box{BoxID: 1, StoreID: 2, Description: "TestBox2"}
+	bn := Box{BoxID: 1}
+	err := b.Update()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	err = bn.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if bn.Description != "TestBox2" {
+		t.Error("Expected Name = TestBox2 but got", bn.Description)
+	}
+}
+
+func TestStoreAddStoreBox(t *testing.T) {
+	b := Box{BoxID: 1}
+	err := b.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no #1 error but got %v", err)
+	}
+	s := Store{StoreID: 2}
+	err = s.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no #2 error but got %v", err)
+	}
+	err = s.AddStoreBox(b)
+	if err != nil {
+		t.Errorf("Expected no #3 error but got %v", err)
+	}
+}
+
+func TestStoreGetStoreBoxes(t *testing.T) {
+	s := Store{StoreID: 2}
+	err := s.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	bb, err := s.GetStoreBoxes()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(bb) != 1 {
+		t.Errorf("Expected len = 1 got %v", len(bb))
+	}
+}
+
+func TestBoxDelete(t *testing.T) {
+	b := Box{BoxID: 1}
+	err := b.Delete()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+}
+
+func TestItemInsert(t *testing.T) {
+	e := Equipment{Name: "FF54"}
+	s := Store{Name: "foobar", Adress: "test", ManagerID: 1}
 	err := e.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -299,27 +416,32 @@ func TestStoreItemInsert(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	si := StoreItem{StoreItemID: -1, StoreID: s.StoreID, EquipmentID: e.EquipmentID}
+	b := Box{StoreID: s.StoreID, Description: "TestBox"}
+	err = b.Insert()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	si := Item{BoxID: b.BoxID, EquipmentID: e.EquipmentID}
 	err = si.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	if si.StoreItemID != 1 {
-		t.Errorf("Expected StoreItemID = 1 but got %v", si.StoreItemID)
+	if si.ItemID != 1 {
+		t.Errorf("Expected ItemID = 1 but got %v", si.ItemID)
 	}
 	if si.Code != 2000000000015 {
 		t.Errorf("Expected Code = 2000000000015 but got %v", si.Code)
 	}
 }
 
-func TestStoreItemGetDetails(t *testing.T) {
-	si := StoreItem{StoreItemID: 1}
+func TestItemGetDetails(t *testing.T) {
+	si := Item{ItemID: 1}
 	err := si.GetDetails()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	if si.StoreID != 2 {
-		t.Errorf("Expected StoreID = 2 but got %v", si.StoreID)
+	if si.BoxID != 2 {
+		t.Errorf("Expected BoxID = 2 but got %v", si.BoxID)
 	}
 	if si.EquipmentID != 2 {
 		t.Errorf("Expected EquipmentID = 2 but got %v", si.EquipmentID)
@@ -329,10 +451,30 @@ func TestStoreItemGetDetails(t *testing.T) {
 	}
 }
 
-func TestStoreItemUpdate(t *testing.T) {
-	s := Store{StoreID: -1, Name: "foobar", Adress: "test", Manager: 1}
-	e := Equipment{EquipmentID: -1, Name: "FF54"}
-	err := s.Insert()
+func TestBoxAddBoxItem(t *testing.T) {
+	b := Box{BoxID: 2}
+	si := Item{ItemID: 1}
+	err := b.AddBoxItem(si)
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+}
+
+func TestBoxGetBoxItems(t *testing.T) {
+	b := Box{BoxID: 2}
+	res, err := b.GetBoxItems()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(res) != 1 {
+		t.Errorf("Expected len = 1 got %v", len(res))
+	}
+}
+
+func TestItemUpdate(t *testing.T) {
+	e := Equipment{Name: "FF54"}
+	b := Box{StoreID: 2, Description: "TestBox2"}
+	err := b.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
@@ -340,8 +482,8 @@ func TestStoreItemUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	si := StoreItem{StoreItemID: 1, StoreID: s.StoreID, EquipmentID: e.EquipmentID}
-	sin := StoreItem{StoreItemID: 1}
+	si := Item{ItemID: 1, BoxID: b.BoxID, EquipmentID: e.EquipmentID}
+	sin := Item{ItemID: 1}
 	err = si.Update()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -350,18 +492,28 @@ func TestStoreItemUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	if si.StoreID != sin.StoreID {
-		t.Errorf("StoreID missmatch: %v %v", si.StoreID, sin.StoreID)
+	if si.BoxID != sin.BoxID {
+		t.Errorf("StoreID missmatch: %v %v", si.BoxID, sin.BoxID)
 	}
 	if si.EquipmentID != sin.EquipmentID {
 		t.Errorf("EquipmentID missmatch: %v %v", si.EquipmentID, sin.EquipmentID)
 	}
 }
 
-func TestStoreItemPostFault(t *testing.T) {
-	si := StoreItem{StoreItemID: 1}
-	f := Fault{FaultID: -1, StoreItemID: si.StoreItemID, Status: FaultStatusNew, Comment: "Alles kaputt"}
-	f, err := si.PostFault(f)
+func TestGetItems(t *testing.T) {
+	ii, err := GetItems()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(ii) < 1 {
+		t.Errorf("Expected len > 1 got %v", len(ii))
+	}
+}
+
+func TestItemAddFault(t *testing.T) {
+	si := Item{ItemID: 1}
+	f := Fault{ItemID: si.ItemID, Status: FaultStatusNew, Comment: "Alles kaputt"}
+	f, err := si.AddFault(f)
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
@@ -370,36 +522,14 @@ func TestStoreItemPostFault(t *testing.T) {
 	}
 }
 
-func TestStoreItemGetFaults(t *testing.T) {
-	si := StoreItem{StoreItemID: 1}
+func TestItemGetFaults(t *testing.T) {
+	si := Item{ItemID: 1}
 	ff, err := si.GetFaults()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
 	if len(ff) != 1 {
 		t.Errorf("Expected len = 1 but got %v", len(ff))
-	}
-}
-
-func TestStoreGetStoreItems(t *testing.T) {
-	s := Store{StoreID: 3}
-	sis, err := s.GetStoreitems()
-	if err != nil {
-		t.Errorf("Expected no error but got %v", err)
-	}
-	if len(sis) != 1 {
-		t.Errorf("Expected len = 1 but got %v", len(sis))
-	}
-}
-
-func TestStoreGetItemCount(t *testing.T) {
-	s := Store{StoreID: 3}
-	c, err := s.GetItemCount(3)
-	if err != nil {
-		t.Errorf("Expected no error but got %v", err)
-	}
-	if c != 1 {
-		t.Errorf("Expected len = 1 but got %v", c)
 	}
 }
 
@@ -454,8 +584,8 @@ func TestDeleteFault(t *testing.T) {
 	}
 }
 
-func TestStoreItemDelete(t *testing.T) {
-	si := StoreItem{StoreID: 1}
+func TestItemDelete(t *testing.T) {
+	si := Item{ItemID: 1}
 	err := si.Delete()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -463,7 +593,7 @@ func TestStoreItemDelete(t *testing.T) {
 }
 
 func TestEventInsert(t *testing.T) {
-	e := Event{EventID: -1, Name: "CCS", Adress: "Chiemsee", Start: time.Now().Add(time.Hour * 24), End: time.Now().Add(time.Hour * 24 * 3)}
+	e := Event{Name: "CCS", Adress: "Chiemsee", Start: time.Now().Add(time.Hour * 24), End: time.Now().Add(time.Hour * 24 * 3)}
 	err := e.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -603,7 +733,7 @@ func TestPackinglistInsert(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	pl := Packinglist{PackinglistID: -1, Name: "Galaxy", EventID: 2}
+	pl := Packinglist{Name: "Galaxy", EventID: 2}
 	err = pl.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -615,6 +745,17 @@ func TestPackinglistInsert(t *testing.T) {
 
 func TestGetPackingLists(t *testing.T) {
 	pp, err := GetPackinglists()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(pp) != 1 {
+		t.Errorf("Expected len = 1 but got %v", len(pp))
+	}
+}
+
+func TestEventGetPackinglists(t *testing.T) {
+	e := Event{EventID: 1}
+	pp, err := e.GetPackinglists()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
@@ -650,32 +791,36 @@ func TestPackingListUpdate(t *testing.T) {
 	}
 }
 
-func TestPackingListItemInsert(t *testing.T) {
+func TestPackinglistAddBox(t *testing.T) {
 	e := Equipment{Name: "FF54"}
 	err := e.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	s := Store{Name: "Kitchen", Manager: 1}
+	s := Store{Name: "Kitchen", Adress: "Straße", ManagerID: 1}
 	err = s.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	si := StoreItem{StoreID: s.StoreID, EquipmentID: e.EquipmentID}
-	err = si.Insert()
+	b := Box{StoreID: s.StoreID, Description: "TestBox2"}
+	err = b.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	pli := PackinglistItem{PackinglistID: 1, StoreitemID: si.StoreItemID}
-	err = pli.Insert()
+	p := Packinglist{PackinglistID: 1}
+	err = p.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	err = p.AddPackinglistBox(b)
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
 }
 
-func TestPackinglistGetItems(t *testing.T) {
+func TestPackinglistGetPackinglistBoxes(t *testing.T) {
 	p := Packinglist{PackinglistID: 1}
-	sis, err := p.GetItems()
+	sis, err := p.GetPackinglistBoxes()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
@@ -684,9 +829,14 @@ func TestPackinglistGetItems(t *testing.T) {
 	}
 }
 
-func TestPackinglistItemDelete(t *testing.T) {
-	p := PackinglistItem{StoreitemID: 2, PackinglistID: 1}
-	err := p.Delete()
+func TestPackinglistRemovePackinglistBox(t *testing.T) {
+	b := Box{BoxID: 3}
+	err := b.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	p := Packinglist{PackinglistID: 1}
+	err = p.RemovePackinglistBox(b)
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
@@ -701,7 +851,7 @@ func TestPackingListDelete(t *testing.T) {
 }
 
 func TestWishlistInsert(t *testing.T) {
-	w := Wishlist{WishlistID: -1, Name: "test"}
+	w := Wishlist{Name: "test"}
 	err := w.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -748,57 +898,23 @@ func TestWishlistUpdate(t *testing.T) {
 	}
 }
 
-func TestWishlistItemInsert(t *testing.T) {
-	wli := Wishlistitem{WishlistID: 1, EquipmentID: 3, Count: 5}
-	err := wli.Insert()
-	if err != nil {
-		t.Errorf("Expected no error but got %v", err)
-	}
-}
-
-func TestWishlistItemGetDetails(t *testing.T) {
-	wli := Wishlistitem{WishlistID: 1, EquipmentID: 3}
-	err := wli.GetDetails()
-	if err != nil {
-		t.Errorf("Expected no error but got %v", err)
-	}
-	if wli.Count != 5 {
-		t.Errorf("Expected Count = 5 but got %v", wli.Count)
-	}
-}
-
-func TestWishlistGetItems(t *testing.T) {
+func TestWishlistAddWishlistItems(t *testing.T) {
 	w := Wishlist{WishlistID: 1}
-	ee, err := w.GetItems()
+	e := Equipment{EquipmentID: 4}
+	err := w.AddWishlistItem(e)
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+}
+
+func TestWishlistGetWishlistItems(t *testing.T) {
+	w := Wishlist{WishlistID: 1}
+	ee, err := w.GetWishlistItems()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
 	if len(ee) != 1 {
 		t.Errorf("Expected len = 1 but got %v", len(ee))
-	}
-}
-
-func TestWishlistItemUpdate(t *testing.T) {
-	wli := Wishlistitem{WishlistID: 1, EquipmentID: 3, Count: 10}
-	wlin := Wishlistitem{WishlistID: 1, EquipmentID: 3}
-	err := wli.Update()
-	if err != nil {
-		t.Errorf("Expected no error but got %v", err)
-	}
-	err = wlin.GetDetails()
-	if err != nil {
-		t.Errorf("Expected no error but got %v", err)
-	}
-	if wli.Count != wlin.Count {
-		t.Errorf("Count missmatch: %v %v", wli.Count, wlin.Count)
-	}
-}
-
-func TestWishlistItemDelete(t *testing.T) {
-	wli := Wishlistitem{WishlistID: 1, EquipmentID: 3}
-	err := wli.Delete()
-	if err != nil {
-		t.Errorf("Expected no error but got %v", err)
 	}
 }
 

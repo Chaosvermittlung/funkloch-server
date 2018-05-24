@@ -7,22 +7,24 @@ import (
 
 	"github.com/Chaosvermittlung/funkloch-server/global"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mssql"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 var db *gorm.DB
 
 func Initialisation(dbc *global.DBConnection) {
 	var err error
+	cont := checkDBExists(dbc)
 	db, err = gorm.Open(dbc.Driver, dbc.Connection)
 	if err != nil {
 		log.Fatal(err)
 	}
-	initDB(dbc)
+	if !cont {
+		initDB()
+	}
 }
 
-func initDB(dbc *global.DBConnection) {
+func checkDBExists(dbc *global.DBConnection) bool {
 	var cont bool
 	switch dbc.Driver {
 	case "sqlite3":
@@ -35,40 +37,44 @@ func initDB(dbc *global.DBConnection) {
 	default:
 		log.Fatal("DB Driver unkown. Stopping Server")
 	}
-	if !cont {
-		db.AutoMigrate(&User{})
-		db.AutoMigrate(&Store{})
-		db.AutoMigrate(&Equipment{})
-		db.AutoMigrate(&Box{})
-		db.AutoMigrate(&Item{})
-		db.AutoMigrate(&Event{})
-		db.AutoMigrate(&Packinglist{})
-		db.AutoMigrate(&Participant{})
-		db.AutoMigrate(&Wishlist{})
-		db.AutoMigrate(&Fault{})
+	return cont
+}
 
-		var u User
-		u.Username = "admin"
-		u.Password = "admin"
-		u.Email = "admin@localhost"
-		u.Right = USERRIGHT_ADMIN
-		s, err := global.GenerateSalt()
-		if err != nil {
-			log.Println(err)
-		}
-		u.Salt = s
+func initDB() {
+	//db.LogMode(true)
+	log.Println("Creating DB")
+	db.AutoMigrate(&User{})
+	db.AutoMigrate(&Store{})
+	db.AutoMigrate(&Equipment{})
+	db.AutoMigrate(&Box{})
+	db.AutoMigrate(&Item{})
+	db.AutoMigrate(&Event{})
+	db.AutoMigrate(&Packinglist{})
+	db.AutoMigrate(&Participant{})
+	db.AutoMigrate(&Wishlist{})
+	db.AutoMigrate(&Fault{})
 
-		pw, err := global.GeneratePasswordHash(u.Password, u.Salt)
-		if err != nil {
-			log.Println(err)
-		}
-		u.Password = pw
-		err = u.Insert()
-		if err != nil {
-			log.Println(err)
-		}
-		db.Create(&u)
+	var u User
+	u.Username = "admin"
+	u.Password = "admin"
+	u.Email = "admin@localhost"
+	u.Right = USERRIGHT_ADMIN
+	s, err := global.GenerateSalt()
+	if err != nil {
+		log.Println(err)
 	}
+	u.Salt = s
+
+	pw, err := global.GeneratePasswordHash(u.Password, u.Salt)
+	if err != nil {
+		log.Println(err)
+	}
+	u.Password = pw
+	err = u.Insert()
+	if err != nil {
+		log.Println(err)
+	}
+	db.Create(&u)
 
 }
 
@@ -80,13 +86,12 @@ const (
 )
 
 type User struct {
-	gorm.Model
-	UserID   int       `json:"id";gorm:"primary_key"`
-	Username string    `json:"username"`
-	Password string    `json:"password"`
-	Salt     string    `json:"-"`
-	Email    string    `json:"email"`
-	Right    UserRight `json:"userright"`
+	UserID   int       `json:"id" gorm:"primary_key;AUTO_INCREMENT;not null"`
+	Username string    `json:"username" gorm:"not null"`
+	Password string    `json:"password gorm:"not null"`
+	Salt     string    `json:"-" gorm:"not null"`
+	Email    string    `json:"email" gorm:"not null"`
+	Right    UserRight `json:"userright" gorm:"not null"`
 }
 
 func copyifnotempty(str1, str2 string) string {
@@ -101,7 +106,11 @@ func DoesUserExist(username string) (bool, error) {
 	var u User
 	err := db.Where("Username = ?", username).First(&u)
 	b := (u.UserID > 0)
-	return b, err.Error
+	if gorm.IsRecordNotFoundError(err.Error) {
+		return false, nil
+	} else {
+		return b, err.Error
+	}
 }
 
 func GetUsers() ([]User, error) {
@@ -154,12 +163,12 @@ func DeleteUser(id int) error {
 }
 
 type Store struct {
-	gorm.Model
-	StoreID   int `gorm:"primary_key"`
-	Name      string
-	Adress    string `gorm:"foreignkey:ManagerID"`
-	Manager   User
-	ManagerID int
+	StoreID   int    `gorm:"primary_key;AUTO_INCREMENT;not null"`
+	Name      string `gorm:"not null"`
+	Adress    string `gorm:"not null"`
+	Manager   User   `gorm:"not null"`
+	ManagerID int    `gorm:"foreignkey:ManagerID;not null"`
+	Boxes     []Box  `gorm:"foreignkey:StoreID;association_foreignkey:StoreID"`
 }
 
 func (s *Store) Insert() error {
@@ -180,7 +189,7 @@ func (s *Store) GetDetails() error {
 
 func (s *Store) GetManager() (User, error) {
 	var u User
-	err := db.Model(&s).Related(&u, "Manager")
+	err := db.Model(&s).Related(&u)
 	return u, err.Error
 }
 
@@ -196,14 +205,18 @@ func (s *Store) Delete() error {
 
 func (s *Store) GetStoreBoxes() ([]Box, error) {
 	var bo []Box
-	err := db.Model(&s).Related(&bo)
+	err := db.Model(&s).Association("Boxes").Find(&bo)
 	return bo, err.Error
 }
 
+func (s *Store) AddStoreBox(b Box) error {
+	err := db.Model(&s).Association("Boxes").Append(&b)
+	return err.Error
+}
+
 type Equipment struct {
-	gorm.Model
-	EquipmentID int `gorm:"primary_key"`
-	Name        string
+	EquipmentID int    `gorm:"primary_key;AUTO_INCREMENT;not null"`
+	Name        string `gorm:"not null"`
 }
 
 func (e *Equipment) Insert() error {
@@ -233,12 +246,11 @@ func (e *Equipment) Delete() error {
 }
 
 type Box struct {
-	gorm.Model
-	BoxID       int `gorm:"primary_key"`
-	Store       Store
-	Items       []Item
-	Code        int
-	Description string
+	BoxID       int    `gorm:"primary_key;AUTO_INCREMENT;not null"`
+	StoreID     int    `gorm:"not null"`
+	Items       []Item `gorm:"foreignkey:BoxID;association_foreignkey:BoxID"`
+	Code        int    `gorm:"type:integer(13)"`
+	Description string `gorm:"not null"`
 }
 
 func (b *Box) Insert() error {
@@ -273,26 +285,28 @@ func (b *Box) Delete() error {
 	return err.Error
 }
 
-func (b *Box) AddStoreItem(item Item) error {
+func (b *Box) AddBoxItem(item Item) error {
 	err := db.Model(&b).Association("Items").Append(&item)
 	return err.Error
 }
 
-type Item struct {
-	gorm.Model
-	ItemID      int `gorm:"primary_key"`
-	BoxID       int
-	EquipmentID int
-	Equipment   Equipment
-	Code        int
-	Faults      []Fault
+func (b *Box) GetBoxItems() ([]Item, error) {
+	var ii []Item
+	err := db.Model(&b).Association("Items").Find(&ii)
+	return ii, err.Error
 }
 
-func (i Item) Insert() error {
+type Item struct {
+	ItemID      int `gorm:"primary_key;AUTO_INCREMENT;not null"`
+	BoxID       int
+	EquipmentID int       `gorm:"not null"`
+	Equipment   Equipment `gorm:"not null"`
+	Code        int       `gorm:"type:integer(13)"`
+	Faults      []Fault   `gorm:"foreignkey:ItemID;association_foreignkey:ItemID"`
+}
+
+func (i *Item) Insert() error {
 	err := db.Create(&i)
-	if err.Error != nil {
-		return err.Error
-	}
 	tmp, err2 := strconv.Atoi(global.CreateItemEAN(i.ItemID))
 	if err2 != nil {
 		return err2
@@ -302,45 +316,45 @@ func (i Item) Insert() error {
 	return err.Error
 }
 
-func (i Item) GetDetails() error {
+func (i *Item) GetDetails() error {
 	err := db.First(&i, i.ItemID)
 	return err.Error
 }
 
-func (i Item) Update() error {
+func (i *Item) Update() error {
 	err := db.Save(&i)
 	return err.Error
 }
 
-func (i Item) Delete() error {
+func (i *Item) Delete() error {
 	err := db.Delete(&i)
 	return err.Error
 }
 
-func GetStoreItems() ([]Item, error) {
+func GetItems() ([]Item, error) {
 	var ii []Item
 	err := db.Find(&ii)
 	return ii, err.Error
 }
 
-func (i Item) GetFaults() ([]Fault, error) {
+func (i *Item) GetFaults() ([]Fault, error) {
 	var result []Fault
 	err := db.Model(&i).Related(&result)
 	return result, err.Error
 }
 
-func (i Item) PostFault(f Fault) (Fault, error) {
+func (i *Item) AddFault(f Fault) (Fault, error) {
 	err := f.Insert()
 	return f, err
 }
 
 type Event struct {
-	gorm.Model
-	EventID int `gorm:"primary_key"`
-	Name    string
-	Start   time.Time
-	End     time.Time
-	Adress  string
+	EventID      int           `gorm:"primary_key;AUTO_INCREMENT;not null"`
+	Name         string        `gorm:"not null"`
+	Start        time.Time     `gorm:"not null"`
+	End          time.Time     `gorm:"not null"`
+	Adress       string        `gorm:"not null"`
+	Participants []Participant `gorm:"foreignkey:EventID;association_foreignkey:EventID"`
 }
 
 func (e *Event) Insert() error {
@@ -388,12 +402,11 @@ func GetNextEvent() (Event, error) {
 }
 
 type Packinglist struct {
-	gorm.Model
-	PackinglistID int `gorm:"primary_key"`
-	Name          string
-	EventID       int
-	Event         Event
-	Boxes         []Box `gorm:"many2many:packinglist_boxes;"`
+	PackinglistID int    `gorm:"primary_key;AUTO_INCREMENT;not null"`
+	Name          string `gorm:"not null"`
+	EventID       int    `gorm:"not null"`
+	Event         Event  `gorm:"not null"`
+	Boxes         []Box  `gorm:"many2many:packinglist_boxes;"`
 }
 
 func (p *Packinglist) Insert() error {
@@ -417,10 +430,20 @@ func (p *Packinglist) Update() error {
 	return err.Error
 }
 
-func (p *Packinglist) GetBoxes() ([]Box, error) {
+func (p *Packinglist) AddPackinglistBox(b Box) error {
+	err := db.Model(&p).Association("Boxes").Append(&b)
+	return err.Error
+}
+
+func (p *Packinglist) GetPackinglistBoxes() ([]Box, error) {
 	var res []Box
-	err := db.Model(&p).Related(&res)
+	err := db.Model(&p).Association("Boxes").Find(&res)
 	return res, err.Error
+}
+
+func (p *Packinglist) RemovePackinglistBox(b Box) error {
+	err := db.Model(&p).Association("Boxes").Delete(&b)
+	return err.Error
 }
 
 func (p *Packinglist) Delete() error {
@@ -429,13 +452,11 @@ func (p *Packinglist) Delete() error {
 }
 
 type Participant struct {
-	gorm.Model
-	UserID    int `gorm:"primary_key"`
-	User      User
-	EventID   int `gorm:"primary_key"`
-	Event     Event
-	Arrival   time.Time
-	Departure time.Time
+	UserID    int       `gorm:"type:integer;primary_key;not null"`
+	User      User      `gorm:"not null;foreignkey:UserID;association_foreignkey:UserID"`
+	EventID   int       `gorm:"type:integer;primary_key;not null"`
+	Arrival   time.Time `gorm:"not null"`
+	Departure time.Time `gorm:"not null"`
 }
 
 func (p *Participant) Insert() error {
@@ -454,14 +475,13 @@ func (p *Participant) Delete() error {
 }
 
 func (p *Participant) GetDetails() error {
-	err := db.Where("UserID = ? and EventID = ?", p.UserID, p.EventID).First(&p)
+	err := db.Where("User_ID = ? and Event_ID = ?", p.UserID, p.EventID).First(&p)
 	return err.Error
 }
 
 type Wishlist struct {
-	gorm.Model
-	WishlistID int `gorm:"primary_key"`
-	Name       string
+	WishlistID int         `gorm:"primary_key;AUTO_INCREMENT;not null"`
+	Name       string      `gorm:"not null"`
 	Items      []Equipment `gorm:"many2many:wishlist_equipment;"`
 }
 
@@ -491,9 +511,14 @@ func (w *Wishlist) GetDetails() error {
 	return err.Error
 }
 
-func (w *Wishlist) GetItems() ([]Equipment, error) {
+func (w *Wishlist) AddWishlistItem(e Equipment) error {
+	err := db.Model(&w).Association("Items").Append(&e)
+	return err.Error
+}
+
+func (w *Wishlist) GetWishlistItems() ([]Equipment, error) {
 	var res []Equipment
-	err := db.Model(&w).Related(&res)
+	err := db.Model(&w).Association("Items").Find(&res)
 	return res, err.Error
 }
 
@@ -507,11 +532,10 @@ const (
 )
 
 type Fault struct {
-	gorm.Model
-	FaultID int `gorm:"primary_key"`
-	ItemID  int
-	Status  FaultStatus
-	Comment string
+	FaultID int         `gorm:"primary_key;AUTO_INCREMENT;not null"`
+	ItemID  int         `gorm:"not null"`
+	Status  FaultStatus `gorm:"not null"`
+	Comment string      `gorm:"not null"`
 }
 
 func (f *Fault) Insert() error {
