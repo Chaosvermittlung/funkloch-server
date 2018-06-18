@@ -88,7 +88,7 @@ const (
 type User struct {
 	UserID   int       `json:"id" gorm:"primary_key;AUTO_INCREMENT;not null"`
 	Username string    `json:"username" gorm:"not null"`
-	Password string    `json:"password gorm:"not null"`
+	Password string    `json:"password" gorm:"not null"`
 	Salt     string    `json:"-" gorm:"not null"`
 	Email    string    `json:"email" gorm:"not null"`
 	Right    UserRight `json:"userright" gorm:"not null"`
@@ -305,6 +305,20 @@ type Item struct {
 	Faults      []Fault   `gorm:"foreignkey:ItemID;association_foreignkey:ItemID"`
 }
 
+type ItemslistEntry struct {
+	ItemID         int
+	ItemCode       int
+	BoxID          int
+	BoxCode        int
+	BoxDescription string
+	StoreID        int
+	StoreName      string
+	StoreAddress   string
+	StoreManagerID int
+	EquipmentID    int
+	EquipmentName  string
+}
+
 func (i *Item) Insert() error {
 	err := db.Create(&i)
 	tmp, err2 := strconv.Atoi(global.CreateItemEAN(i.ItemID))
@@ -335,6 +349,17 @@ func GetItems() ([]Item, error) {
 	var ii []Item
 	err := db.Find(&ii)
 	return ii, err.Error
+}
+
+func GetItemsJoined() ([]ItemslistEntry, error) {
+	var ile []ItemslistEntry
+	err := db.Table("Items").
+		Select("Items.item_id, Items.code as ItemCode, Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, Equipment.equipment_id, Equipment.name as EquipmentName ").
+		Joins("left join Boxes on Items.box_id = Boxes.box_id").
+		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
+		Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
+		Scan(&ile)
+	return ile, err.Error
 }
 
 func (i *Item) GetFaults() ([]Fault, error) {

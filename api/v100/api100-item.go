@@ -50,7 +50,7 @@ func postItemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func listItemsHandler(w http.ResponseWriter, r *http.Request) {
-	ss, err := db100.GetItems()
+	ss, err := db100.GetItemsJoined()
 	if err != nil {
 		apierror(w, r, "Error fetching StoreItems: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
@@ -58,25 +58,18 @@ func listItemsHandler(w http.ResponseWriter, r *http.Request) {
 	var res []itemResponse
 	for _, s := range ss {
 		var sir itemResponse
-		sir.Item = s
-		sir.Equipment.EquipmentID = s.EquipmentID
-		err = sir.Equipment.GetDetails()
-		if err != nil {
-			apierror(w, r, "Error fetching Item Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-			return
-		}
+		sir.Item.ItemID = s.ItemID
+		sir.Item.Code = s.ItemCode
+		sir.Item.EquipmentID = s.EquipmentID
 		sir.Box.BoxID = s.BoxID
-		err = sir.Box.GetDetails()
-		if err != nil {
-			apierror(w, r, "Error fetching Item Box: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-			return
-		}
-		sir.Store.StoreID = sir.Box.StoreID
-		err = sir.Store.GetDetails()
-		if err != nil {
-			apierror(w, r, "Error fetching Item Box Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-			return
-		}
+		sir.Box.Code = s.BoxCode
+		sir.Box.Description = s.BoxDescription
+		sir.Store.StoreID = s.StoreID
+		sir.Store.Adress = s.StoreAddress
+		sir.Store.ManagerID = s.StoreManagerID
+		sir.Store.Name = s.StoreName
+		sir.Equipment.EquipmentID = s.EquipmentID
+		sir.Equipment.Name = s.EquipmentName
 		res = append(res, sir)
 	}
 	j, err := json.Marshal(&res)
