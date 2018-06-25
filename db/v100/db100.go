@@ -254,14 +254,16 @@ type Box struct {
 }
 
 type BoxlistEntry struct {
-	BoxID            int
-	BoxCode          int
-	BoxDescription   string
-	StoreID          int
-	StoreName        string
-	StoreAddress     string
-	StoreManagerID   int
-	StoreManagerName string
+	BoxID             int
+	BoxCode           int
+	BoxDescription    string
+	StoreID           int
+	StoreName         string
+	StoreAddress      string
+	StoreManagerID    int
+	StoreManagerName  string
+	StoreManagerEmail string
+	StoreManagerRight int
 }
 
 func (b *Box) Insert() error {
@@ -291,6 +293,17 @@ func (b *Box) GetDetails() error {
 	return err.Error
 }
 
+func (b *Box) GetFullDetails() (BoxlistEntry, error) {
+	var ble BoxlistEntry
+	err := db.Table("Boxes").
+		Select("Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, User.Username as StoreManagerName, User.Email as StoreManagerEmail, User.Right as StoreManagerRight").
+		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
+		Joins("left join Users on Stores.Manager_id = Users.User_id").
+		Where("Boxes.box_id = ?", b.BoxID).
+		Find(&ble)
+	return ble, err.Error
+}
+
 func (b *Box) Delete() error {
 	err := db.Delete(b)
 	return err.Error
@@ -310,7 +323,7 @@ func (b *Box) GetBoxItems() ([]Item, error) {
 func GetBoxesJoined() ([]BoxlistEntry, error) {
 	var ble []BoxlistEntry
 	err := db.Table("Boxes").
-		Select("Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, User.Username as StoreManagerName").
+		Select("Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, User.Username as StoreManagerName, User.Email as StoreManagerEmail, User.Right as StoreManagerRight").
 		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
 		Joins("left join Users on Stores.Manager_id = Users.User_id").
 		Scan(&ble)
