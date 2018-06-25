@@ -52,7 +52,7 @@ func postItemHandler(w http.ResponseWriter, r *http.Request) {
 func listItemsHandler(w http.ResponseWriter, r *http.Request) {
 	ss, err := db100.GetItemsJoined()
 	if err != nil {
-		apierror(w, r, "Error fetching StoreItems: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error fetching Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 	var res []itemResponse
@@ -177,7 +177,7 @@ func deleteItemHandler(w http.ResponseWriter, r *http.Request) {
 	s := db100.Item{ItemID: id}
 	err = s.Delete()
 	if err != nil {
-		apierror(w, r, "Error deleting StoreItem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error deleting Item: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 }
