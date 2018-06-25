@@ -253,6 +253,17 @@ type Box struct {
 	Description string `gorm:"not null"`
 }
 
+type BoxlistEntry struct {
+	BoxID            int
+	BoxCode          int
+	BoxDescription   string
+	StoreID          int
+	StoreName        string
+	StoreAddress     string
+	StoreManagerID   int
+	StoreManagerName string
+}
+
 func (b *Box) Insert() error {
 	err := db.Create(&b)
 	tmp, err2 := strconv.Atoi(global.CreateBoxEAN(b.BoxID))
@@ -296,6 +307,28 @@ func (b *Box) GetBoxItems() ([]Item, error) {
 	return ii, err.Error
 }
 
+func GetBoxesJoined() ([]BoxlistEntry, error) {
+	var ble []BoxlistEntry
+	err := db.Table("Boxes").
+		Select("Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, User.Username as StoreManagerName").
+		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
+		Joins("left join Users on Stores.Manager_id = Users.User_id").
+		Scan(&ble)
+	return ble, err.Error
+}
+
+func (b *Box) GetBoxItemsJoined() ([]ItemslistEntry, error) {
+	var ile []ItemslistEntry
+	err := db.Table("Items").
+		Select("Items.item_id, Items.code as ItemCode, Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, Equipment.equipment_id, Equipment.name as EquipmentName ").
+		Joins("left join Boxes on Items.box_id = Boxes.box_id").
+		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
+		Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
+		Where("Items.Box_id = ?", b.BoxID).
+		Scan(&ile)
+	return ile, err.Error
+}
+
 type Item struct {
 	ItemID      int `gorm:"primary_key;AUTO_INCREMENT;not null"`
 	BoxID       int
@@ -333,6 +366,18 @@ func (i *Item) Insert() error {
 func (i *Item) GetDetails() error {
 	err := db.First(&i, i.ItemID)
 	return err.Error
+}
+
+func (i *Item) GetFullDetails() (ItemslistEntry, error) {
+	var ile ItemslistEntry
+	err := db.Table("Items").
+		Select("Items.item_id, Items.code as ItemCode, Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, Equipment.equipment_id, Equipment.name as EquipmentName ").
+		Joins("left join Boxes on Items.box_id = Boxes.box_id").
+		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
+		Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
+		Where("Items.item_id = ?", i.ItemID).
+		Find(&ile)
+	return ile, err.Error
 }
 
 func (i *Item) Update() error {

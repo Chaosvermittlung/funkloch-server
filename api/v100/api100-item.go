@@ -10,6 +10,32 @@ import (
 	"github.com/gorilla/mux"
 )
 
+func convertItemListEntryinitemResponse(s db100.ItemslistEntry) itemResponse {
+	var sir itemResponse
+	sir.Item.ItemID = s.ItemID
+	sir.Item.Code = s.ItemCode
+	sir.Item.EquipmentID = s.EquipmentID
+	sir.Box.BoxID = s.BoxID
+	sir.Box.Code = s.BoxCode
+	sir.Box.Description = s.BoxDescription
+	sir.Store.StoreID = s.StoreID
+	sir.Store.Adress = s.StoreAddress
+	sir.Store.ManagerID = s.StoreManagerID
+	sir.Store.Name = s.StoreName
+	sir.Equipment.EquipmentID = s.EquipmentID
+	sir.Equipment.Name = s.EquipmentName
+	return sir
+}
+
+func convertItemListinItemResponseList(ss []db100.ItemslistEntry) []itemResponse {
+	var res []itemResponse
+	for _, s := range ss {
+		sir := convertItemListEntryinitemResponse(s)
+		res = append(res, sir)
+	}
+	return res
+}
+
 func getItemRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
 	r.HandleFunc("/", postItemHandler).Methods("POST")
@@ -55,23 +81,7 @@ func listItemsHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error fetching Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	var res []itemResponse
-	for _, s := range ss {
-		var sir itemResponse
-		sir.Item.ItemID = s.ItemID
-		sir.Item.Code = s.ItemCode
-		sir.Item.EquipmentID = s.EquipmentID
-		sir.Box.BoxID = s.BoxID
-		sir.Box.Code = s.BoxCode
-		sir.Box.Description = s.BoxDescription
-		sir.Store.StoreID = s.StoreID
-		sir.Store.Adress = s.StoreAddress
-		sir.Store.ManagerID = s.StoreManagerID
-		sir.Store.Name = s.StoreName
-		sir.Equipment.EquipmentID = s.EquipmentID
-		sir.Equipment.Name = s.EquipmentName
-		res = append(res, sir)
-	}
+	res := convertItemListinItemResponseList(ss)
 	j, err := json.Marshal(&res)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
@@ -90,31 +100,14 @@ func getItemHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
 		return
 	}
-	var sir itemResponse
-	sir.Item.ItemID = id
-	err = sir.Item.GetDetails()
+	var it db100.Item
+	it.ItemID = id
+	ile, err := it.GetFullDetails()
 	if err != nil {
 		apierror(w, r, "Error fetching Item: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	sir.Box.BoxID = sir.Item.BoxID
-	err = sir.Box.GetDetails()
-	if err != nil {
-		apierror(w, r, "Error fetching Item Box: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-		return
-	}
-	sir.Store.StoreID = sir.Box.StoreID
-	err = sir.Store.GetDetails()
-	if err != nil {
-		apierror(w, r, "Error fetching Item Box Store: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-		return
-	}
-	sir.Equipment.EquipmentID = sir.Item.EquipmentID
-	err = sir.Equipment.GetDetails()
-	if err != nil {
-		apierror(w, r, "Error fetching Item Equipment: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
-		return
-	}
+	sir := convertItemListEntryinitemResponse(ile)
 	j, err := json.Marshal(&sir)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
