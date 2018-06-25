@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func convertItemListEntryinitemResponse(s db100.ItemslistEntry) itemResponse {
+func convertItemListEntryinItemResponse(s db100.ItemslistEntry) itemResponse {
 	var sir itemResponse
 	sir.Item.ItemID = s.ItemID
 	sir.Item.Code = s.ItemCode
@@ -30,7 +30,7 @@ func convertItemListEntryinitemResponse(s db100.ItemslistEntry) itemResponse {
 func convertItemListinItemResponseList(ss []db100.ItemslistEntry) []itemResponse {
 	var res []itemResponse
 	for _, s := range ss {
-		sir := convertItemListEntryinitemResponse(s)
+		sir := convertItemListEntryinItemResponse(s)
 		res = append(res, sir)
 	}
 	return res
@@ -107,7 +107,7 @@ func getItemHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error fetching Item: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
-	sir := convertItemListEntryinitemResponse(ile)
+	sir := convertItemListEntryinItemResponse(ile)
 	j, err := json.Marshal(&sir)
 	if err != nil {
 		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
