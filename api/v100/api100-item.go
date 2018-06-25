@@ -36,7 +36,7 @@ func postItemHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	err = i.Insert()
 	if err != nil {
-		apierror(w, r, "Error Inserting Storeitem: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		apierror(w, r, "Error Inserting Item: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
 	j, err := json.Marshal(&i)
