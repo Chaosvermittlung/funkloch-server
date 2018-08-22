@@ -323,7 +323,7 @@ func (b *Box) GetBoxItems() ([]Item, error) {
 func GetBoxesJoined() ([]BoxlistEntry, error) {
 	var ble []BoxlistEntry
 	err := db.Table("Boxes").
-		Select("Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, User.Username as StoreManagerName, User.Email as StoreManagerEmail, User.Right as StoreManagerRight").
+		Select("Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, Users.Username as StoreManagerName, Users.Email as StoreManagerEmail, Users.Right as StoreManagerRight").
 		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
 		Joins("left join Users on Stores.Manager_id = Users.User_id").
 		Scan(&ble)
