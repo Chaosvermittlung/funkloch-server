@@ -366,10 +366,8 @@ type ItemslistEntry struct {
 }
 
 func (i *Item) Insert() error {
+	//Don't check this error, it breaks the code
 	err := db.Create(&i)
-	if err != nil {
-		return err.Error
-	}
 	tmp, err2 := strconv.Atoi(global.CreateItemEAN(i.ItemID))
 	if err2 != nil {
 		return err2
