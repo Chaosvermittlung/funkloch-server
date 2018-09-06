@@ -254,16 +254,16 @@ type Box struct {
 }
 
 type BoxlistEntry struct {
-	BoxID             int
-	BoxCode           int
-	BoxDescription    string
-	StoreID           int
-	StoreName         string
-	StoreAddress      string
-	StoreManagerID    int
-	StoreManagerName  string
-	StoreManagerEmail string
-	StoreManagerRight int
+	BoxID       int
+	Code        int
+	Description string
+	StoreID     int
+	Name        string
+	Adress      string
+	ManagerID   int
+	Username    string
+	Email       string
+	Right       int
 }
 
 func (b *Box) Insert() error {
@@ -296,7 +296,7 @@ func (b *Box) GetDetails() error {
 func (b *Box) GetFullDetails() (BoxlistEntry, error) {
 	var ble BoxlistEntry
 	err := db.Table("Boxes").
-		Select("Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, User.Username as StoreManagerName, User.Email as StoreManagerEmail, User.Right as StoreManagerRight").
+		Select("Boxes.box_id, Boxes.code, Boxes.description, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Users.Username, Users.Email, Users.Right").
 		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
 		Joins("left join Users on Stores.Manager_id = Users.User_id").
 		Where("Boxes.box_id = ?", b.BoxID).
@@ -323,7 +323,7 @@ func (b *Box) GetBoxItems() ([]Item, error) {
 func GetBoxesJoined() ([]BoxlistEntry, error) {
 	var ble []BoxlistEntry
 	err := db.Table("Boxes").
-		Select("Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, Users.Username as StoreManagerName, Users.Email as StoreManagerEmail, Users.Right as StoreManagerRight").
+		Select("Boxes.box_id, Boxes.code, Boxes.description, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Users.Username, Users.Email, Users.Right").
 		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
 		Joins("left join Users on Stores.Manager_id = Users.User_id").
 		Scan(&ble)
@@ -367,6 +367,9 @@ type ItemslistEntry struct {
 
 func (i *Item) Insert() error {
 	err := db.Create(&i)
+	if err != nil {
+		return err.Error
+	}
 	tmp, err2 := strconv.Atoi(global.CreateItemEAN(i.ItemID))
 	if err2 != nil {
 		return err2
@@ -383,17 +386,47 @@ func (i *Item) GetDetails() error {
 
 func (i *Item) GetFullDetails() (ItemslistEntry, error) {
 	var ile ItemslistEntry
-	err := db.Table("Items").
-		Select("Items.item_id, Items.code as ItemCode, Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, Equipment.equipment_id, Equipment.name as EquipmentName ").
-		Joins("left join Boxes on Items.box_id = Boxes.box_id").
-		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
-		Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
-		Where("Items.item_id = ?", i.ItemID).
-		Find(&ile)
-	return ile, err.Error
+	/*err := db.Table("Items").
+	Select("Items.item_id, Items.code, Boxes.box_id, Boxes.code, Boxes.description, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Equipment.equipment_id, Equipment.name").
+	Joins("left join Boxes on Items.box_id = Boxes.box_id").
+	Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
+	Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
+	Where("Items.item_id = ?", i.ItemID).
+	Find(&ile)*/
+	err := i.GetDetails()
+	if err != nil {
+		return ile, err
+	}
+	b := Box{BoxID: i.BoxID}
+	ble, err := b.GetFullDetails()
+	if err != nil {
+		return ile, err
+	}
+	e := Equipment{EquipmentID: i.EquipmentID}
+	err = e.GetDetails()
+	if err != nil {
+		return ile, err
+	}
+	ile.ItemID = i.ItemID
+	ile.ItemCode = i.Code
+	ile.BoxID = ble.BoxID
+	ile.BoxCode = ble.Code
+	ile.BoxDescription = ble.Description
+	ile.StoreID = ble.StoreID
+	ile.StoreAddress = ble.Adress
+	ile.StoreManagerID = ble.ManagerID
+	ile.StoreName = ble.Name
+	ile.EquipmentID = e.EquipmentID
+	ile.EquipmentName = e.Name
+	return ile, err
 }
 
 func (i *Item) Update() error {
+	tmp, err2 := strconv.Atoi(global.CreateItemEAN(i.ItemID))
+	if err2 != nil {
+		return err2
+	}
+	i.Code = tmp
 	err := db.Save(&i)
 	return err.Error
 }
@@ -411,13 +444,24 @@ func GetItems() ([]Item, error) {
 
 func GetItemsJoined() ([]ItemslistEntry, error) {
 	var ile []ItemslistEntry
-	err := db.Table("Items").
-		Select("Items.item_id, Items.code as ItemCode, Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, Equipment.equipment_id, Equipment.name as EquipmentName ").
-		Joins("left join Boxes on Items.box_id = Boxes.box_id").
-		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
-		Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
-		Scan(&ile)
-	return ile, err.Error
+	/*err := db.Table("Items").
+	Select("Items.item_id, Items.code, Boxes.box_id, Boxes.code, Boxes.description, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Equipment.equipment_id, Equipment.name").
+	Joins("left join Boxes on Items.box_id = Boxes.box_id").
+	Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
+	Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
+	Select(&ile)*/
+	ii, err := GetItems()
+	if err != nil {
+		return ile, err
+	}
+	for _, i := range ii {
+		iile, err := i.GetFullDetails()
+		if err != nil {
+			return ile, err
+		}
+		ile = append(ile, iile)
+	}
+	return ile, err
 }
 
 func (i *Item) GetFaults() ([]Fault, error) {

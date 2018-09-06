@@ -24,15 +24,16 @@ func getBoxRouter(prefix string) *interpose.Middleware {
 func convertBoxListEntryinBoxResponse(b db100.BoxlistEntry) boxResponse {
 	var br boxResponse
 	br.Box.BoxID = b.BoxID
-	br.Box.Code = b.BoxCode
-	br.Box.Description = b.BoxDescription
+	br.Box.Code = b.Code
+	br.Box.Description = b.Description
 	br.Store.StoreID = b.StoreID
-	br.Store.Adress = b.StoreAddress
-	br.Store.ManagerID = b.StoreManagerID
-	br.User.UserID = b.StoreManagerID
-	br.User.Username = b.StoreManagerName
-	br.User.Email = b.StoreManagerEmail
-	br.User.Right = db100.UserRight(b.StoreManagerRight)
+	br.Store.Adress = b.Adress
+	br.Store.ManagerID = b.ManagerID
+	br.Store.Name = b.Name
+	br.User.UserID = b.ManagerID
+	br.User.Username = b.Username
+	br.User.Email = b.Email
+	br.User.Right = db100.UserRight(b.Right)
 	return br
 }
 
