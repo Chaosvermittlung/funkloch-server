@@ -451,13 +451,20 @@ func (i *Item) Delete() error {
 	return err.Error
 }
 
-func GetItems() ([]Item, error) {
+func GetItems(storeless bool) ([]Item, error) {
 	var ii []Item
-	err := db.Find(&ii)
-	return ii, err.Error
+	var err error
+	if storeless {
+		err2 := db.Where("Box_ID = NULL").Find(&ii)
+		err = err2.Error
+	} else {
+		err2 := db.Find(&ii)
+		err = err2.Error
+	}
+	return ii, err
 }
 
-func GetItemsJoined() ([]ItemslistEntry, error) {
+func GetItemsJoined(storeless bool) ([]ItemslistEntry, error) {
 	var ile []ItemslistEntry
 	/*err := db.Table("Items").
 	Select("Items.item_id, Items.code, Boxes.box_id, Boxes.code, Boxes.description, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Equipment.equipment_id, Equipment.name").
@@ -465,7 +472,7 @@ func GetItemsJoined() ([]ItemslistEntry, error) {
 	Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
 	Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
 	Select(&ile)*/
-	ii, err := GetItems()
+	ii, err := GetItems(storeless)
 	if err != nil {
 		return ile, err
 	}

@@ -40,6 +40,7 @@ func getItemRouter(prefix string) *interpose.Middleware {
 	r, m := GetNewSubrouter(prefix)
 	r.HandleFunc("/", postItemHandler).Methods("POST")
 	r.HandleFunc("/list", listItemsHandler).Methods("GET")
+	r.HandleFunc("/storeless", listStorelessItemsHandler).Methods("GET")
 	r.HandleFunc("/{ID}", getItemHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchItemHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteItemHandler).Methods("DELETE")
@@ -76,7 +77,24 @@ func postItemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func listItemsHandler(w http.ResponseWriter, r *http.Request) {
-	ss, err := db100.GetItemsJoined()
+	ss, err := db100.GetItemsJoined(false)
+	if err != nil {
+		apierror(w, r, "Error fetching Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	res := convertItemListinItemResponseList(ss)
+	j, err := json.Marshal(&res)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
+}
+
+func listStorelessItemsHandler(w http.ResponseWriter, r *http.Request) {
+	ss, err := db100.GetItemsJoined(true)
 	if err != nil {
 		apierror(w, r, "Error fetching Items: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
