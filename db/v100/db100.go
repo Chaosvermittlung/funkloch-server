@@ -331,15 +331,32 @@ func GetBoxesJoined() ([]BoxlistEntry, error) {
 }
 
 func (b *Box) GetBoxItemsJoined() ([]ItemslistEntry, error) {
-	var ile []ItemslistEntry
+	/*var ile []ItemslistEntry
 	err := db.Table("Items").
 		Select("Items.item_id, Items.code as ItemCode, Boxes.box_id, Boxes.code as BoxCode, Boxes.description as BoxDescription, Stores.store_id, Stores.name as Storename, Stores.adress as StoreAddress, Stores.manager_id as StoreManagerID, Equipment.equipment_id, Equipment.name as EquipmentName ").
 		Joins("left join Boxes on Items.box_id = Boxes.box_id").
 		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
 		Joins("left join equipment on Items.equipment_id = equipment.equipment_id").
 		Where("Items.Box_id = ?", b.BoxID).
-		Scan(&ile)
+		Scan(&ile)*/
+	var ii []Item
+	var ile []ItemslistEntry
+	err := db.Table("Items").
+		Select("Items.item_id").
+		Where("Items.Box_id = ?", b.BoxID).
+		Scan(&ii)
+	if err.Error != nil {
+		return ile, err.Error
+	}
+	for _, i := range ii {
+		iile, err := i.GetFullDetails()
+		if err != nil {
+			return ile, err
+		}
+		ile = append(ile, iile)
+	}
 	return ile, err.Error
+
 }
 
 type Item struct {
