@@ -412,10 +412,13 @@ func (i *Item) GetFullDetails() (ItemslistEntry, error) {
 	if err != nil {
 		return ile, err
 	}
-	b := Box{BoxID: i.BoxID}
-	ble, err := b.GetFullDetails()
-	if err != nil {
-		return ile, err
+	var ble BoxlistEntry
+	if i.BoxID != 0 {
+		b := Box{BoxID: i.BoxID}
+		ble, err = b.GetFullDetails()
+		if err != nil {
+			return ile, err
+		}
 	}
 	e := Equipment{EquipmentID: i.EquipmentID}
 	err = e.GetDetails()
@@ -455,7 +458,7 @@ func GetItems(storeless bool) ([]Item, error) {
 	var ii []Item
 	var err error
 	if storeless {
-		err2 := db.Where("Box_ID = NULL").Find(&ii)
+		err2 := db.Where("Box_ID = 0").Find(&ii)
 		err = err2.Error
 	} else {
 		err2 := db.Find(&ii)
