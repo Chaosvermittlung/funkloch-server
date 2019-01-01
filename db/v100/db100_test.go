@@ -501,11 +501,19 @@ func TestItemUpdate(t *testing.T) {
 }
 
 func TestGetItems(t *testing.T) {
-	ii, err := GetItems()
+	ii, err := GetItems(false)
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
 	if len(ii) < 1 {
+		t.Errorf("Expected len > 1 got %v", len(ii))
+	}
+
+	ii, err = GetItems(true)
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(ii) != 0 {
 		t.Errorf("Expected len > 1 got %v", len(ii))
 	}
 }
