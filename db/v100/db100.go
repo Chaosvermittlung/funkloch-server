@@ -491,7 +491,7 @@ func GetItemsJoined(storeless bool) ([]ItemslistEntry, error) {
 
 func (i *Item) GetFaults() ([]Fault, error) {
 	var result []Fault
-	err := db.Model(&i).Related(&result)
+	err := db.Where("item_id = ?", i.ItemID).Find(&result)
 	return result, err.Error
 }
 
