@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	db100 "github.com/Chaosvermittlung/funkloch-server/db/v100"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )

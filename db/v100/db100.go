@@ -556,7 +556,7 @@ func GetNextEvent() (Event, error) {
 type Packinglist struct {
 	PackinglistID int    `gorm:"primary_key;AUTO_INCREMENT;not null"`
 	Name          string `gorm:"not null"`
-	EventID       int    `gorm:"not null"`
+	EventID       int    `gorm:"foreignkey:EventID;not null"`
 	Event         Event  `gorm:"not null"`
 	Boxes         []Box  `gorm:"many2many:packinglist_boxes;"`
 }
@@ -568,8 +568,19 @@ func (p *Packinglist) Insert() error {
 
 func GetPackinglists() ([]Packinglist, error) {
 	var p []Packinglist
+	var res []Packinglist
 	err := db.Find(&p)
-	return p, err.Error
+	if err.Error != nil {
+		return p, err.Error
+	}
+	for _, pp := range p {
+		err := db.Model(&pp).Related(&pp.Event)
+		if err.Error != nil {
+			return p, err.Error
+		}
+		res = append(res, pp)
+	}
+	return res, nil
 }
 
 func (p *Packinglist) GetDetails() error {
