@@ -18,9 +18,8 @@ func getPackinglistRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", patchPackinglistHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deletePackinglistHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/suitable", getSuitablePackinglistBoxesHandler).Methods("GET")
-	//r.HandleFunc("/{ID}/Items", getPackinglistItems).Methods("GET")
-	//r.HandleFunc("/{ID}/Item/{IID}", addPackinglistItemHandler).Methods("POST")
-	//r.HandleFunc("/{ID}/Item/{IID}", removePackinglistItemHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/Box/{BID}", addBoxtoPackinglistHandler).Methods("POST")
+	r.HandleFunc("/{ID}/Box/{BID}", removeBoxfromPackinglistHandler).Methods("DELETE")
 	return m
 }
 
@@ -176,4 +175,60 @@ func getSuitablePackinglistBoxesHandler(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(j)
+}
+
+func addBoxtoPackinglistHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting Packinglist ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	p := db100.Packinglist{PackinglistID: id}
+	bids := vars["BID"]
+	bid, err := strconv.Atoi(bids)
+	if err != nil {
+		apierror(w, r, "Error converting Box ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	b := db100.Box{BoxID: bid}
+	err = p.AddPackinglistBox(b)
+	if err != nil {
+		apierror(w, r, "Error Adding box to packinglist: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+}
+
+func removeBoxfromPackinglistHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting Packinglist ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	p := db100.Packinglist{PackinglistID: id}
+	bids := vars["BID"]
+	bid, err := strconv.Atoi(bids)
+	if err != nil {
+		apierror(w, r, "Error converting Box ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	b := db100.Box{BoxID: bid}
+	err = p.RemovePackinglistBox(b)
+	if err != nil {
+		apierror(w, r, "Error Adding box to packinglist: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
 }
