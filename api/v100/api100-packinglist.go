@@ -17,6 +17,7 @@ func getPackinglistRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", getPackinglistHandler).Methods("GET")
 	r.HandleFunc("/{ID}", patchPackinglistHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deletePackinglistHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/suitable", getSuitablePackinglistBoxesHandler).Methods("GET")
 	//r.HandleFunc("/{ID}/Items", getPackinglistItems).Methods("GET")
 	//r.HandleFunc("/{ID}/Item/{IID}", addPackinglistItemHandler).Methods("POST")
 	//r.HandleFunc("/{ID}/Item/{IID}", removePackinglistItemHandler).Methods("DELETE")
@@ -146,4 +147,33 @@ func deletePackinglistHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, "Error deleting Packinglist: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
 		return
 	}
+}
+
+func getSuitablePackinglistBoxesHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	p := db100.Packinglist{PackinglistID: id}
+	bb, err := p.FindSuitableBoxes()
+	if err != nil {
+		apierror(w, r, "Error finding suitable Boxes: "+err.Error(), http.StatusInternalServerError, ERROR_DBQUERYFAILED)
+		return
+	}
+	j, err := json.Marshal(&bb)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusInternalServerError, ERROR_JSONERROR)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
 }

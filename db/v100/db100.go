@@ -585,6 +585,14 @@ func GetPackinglists() ([]Packinglist, error) {
 
 func (p *Packinglist) GetDetails() error {
 	err := db.First(&p, p.PackinglistID)
+	if err.Error != nil {
+		return err.Error
+	}
+	err = db.Model(&p).Related(&p.Event)
+	if err.Error != nil {
+		return err.Error
+	}
+	err = db.Debug().Model(&p).Related(&p.Boxes, "Boxes")
 	return err.Error
 }
 
@@ -612,6 +620,16 @@ func (p *Packinglist) RemovePackinglistBox(b Box) error {
 func (p *Packinglist) Delete() error {
 	err := db.Delete(&p)
 	return err.Error
+}
+
+func (p *Packinglist) FindSuitableBoxes() ([]Box, error) {
+	var res []Box
+	err := p.GetDetails()
+	if err != nil {
+		return res, err
+	}
+	err2 := db.Raw("Select * From Boxes Where Box_Id not in(Select Box_ID from Boxes, Events, Packinglists, Packinglist_boxes Where Boxes.box_id = Packinglist_boxes.box_box_id and Packinglist_boxes.packinglist_packinglist_id = packinglists.packinglist_id and packinglists.event_id = ?)", p.EventID).Scan(&res)
+	return res, err2.Error
 }
 
 type Participant struct {
