@@ -18,8 +18,8 @@ func getBoxRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", patchBoxHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteBoxHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/items", getBoxItemsHandler).Methods("GET")
-	r.HandleFunc("/{ID}/items/add/{IID}", addItemtoBoxHandler).Methods("POST")
-	r.HandleFunc("/{ID}/items/remove/{IID}", removeItemfromBoxHandler).Methods("POST")
+	r.HandleFunc("/{ID}/items/{IID}", addItemtoBoxHandler).Methods("POST")
+	r.HandleFunc("/{ID}/items/{IID}", removeItemfromBoxHandler).Methods("DELETE")
 	return m
 }
 
