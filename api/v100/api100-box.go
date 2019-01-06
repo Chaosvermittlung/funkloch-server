@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	db100 "github.com/Chaosvermittlung/funkloch-server/db/v100"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )
@@ -18,6 +18,8 @@ func getBoxRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", patchBoxHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deleteBoxHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/items", getBoxItemsHandler).Methods("GET")
+	r.HandleFunc("/{ID}/items/add/{IID}", addItemtoBoxHandler).Methods("POST")
+	r.HandleFunc("/{ID}/items/remove/{IID}", removeItemfromBoxHandler).Methods("POST")
 	return m
 }
 
@@ -203,4 +205,52 @@ func getBoxItemsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(j)
+}
+
+func addItemtoBoxHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	i := vars["ID"]
+	id, err := strconv.Atoi(i)
+	if err != nil {
+		apierror(w, r, "Error converting Box ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	ii := vars["IID"]
+	iid, err := strconv.Atoi(ii)
+	if err != nil {
+		apierror(w, r, "Error converting Item ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	it := db100.Item{ItemID: iid}
+	err = it.SetBox(id)
+	if err != nil {
+		apierror(w, r, "Error updating Item: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+}
+
+func removeItemfromBoxHandler(w http.ResponseWriter, r *http.Request) {
+	err := userhasrRight(r, db100.USERRIGHT_MEMBER)
+	if err != nil {
+		apierror(w, r, err.Error(), http.StatusUnauthorized, ERROR_USERNOTAUTHORIZED)
+		return
+	}
+	vars := mux.Vars(r)
+	ii := vars["IID"]
+	iid, err := strconv.Atoi(ii)
+	if err != nil {
+		apierror(w, r, "Error converting Item ID: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
+	it := db100.Item{ItemID: iid}
+	err = it.SetBox(0)
+	if err != nil {
+		apierror(w, r, "Error updating Item: "+err.Error(), http.StatusBadRequest, ERROR_INVALIDPARAMETER)
+		return
+	}
 }

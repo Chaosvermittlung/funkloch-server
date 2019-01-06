@@ -1,6 +1,7 @@
 package db100
 
 import (
+	"errors"
 	"log"
 	"strconv"
 	"time"
@@ -498,6 +499,19 @@ func (i *Item) GetFaults() ([]Fault, error) {
 func (i *Item) AddFault(f Fault) (Fault, error) {
 	err := f.Insert()
 	return f, err
+}
+
+func (i *Item) SetBox(id int) error {
+	err := i.GetDetails()
+	if err != nil {
+		return errors.New("Error getting Item Details:" + err.Error())
+	}
+	i.BoxID = id
+	err = i.Update()
+	if err != nil {
+		return errors.New("Error updating Item Details:" + err.Error())
+	}
+	return nil
 }
 
 type Event struct {
