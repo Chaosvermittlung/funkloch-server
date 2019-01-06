@@ -18,8 +18,8 @@ func getPackinglistRouter(prefix string) *interpose.Middleware {
 	r.HandleFunc("/{ID}", patchPackinglistHandler).Methods("PATCH")
 	r.HandleFunc("/{ID}", deletePackinglistHandler).Methods("DELETE")
 	r.HandleFunc("/{ID}/suitable", getSuitablePackinglistBoxesHandler).Methods("GET")
-	r.HandleFunc("/{ID}/Box/{BID}", addBoxtoPackinglistHandler).Methods("POST")
-	r.HandleFunc("/{ID}/Box/{BID}", removeBoxfromPackinglistHandler).Methods("DELETE")
+	r.HandleFunc("/{ID}/boxes/{BID}", addBoxtoPackinglistHandler).Methods("POST")
+	r.HandleFunc("/{ID}/boxes/{BID}", removeBoxfromPackinglistHandler).Methods("DELETE")
 	return m
 }
 

@@ -606,7 +606,7 @@ func (p *Packinglist) GetDetails() error {
 	if err.Error != nil {
 		return err.Error
 	}
-	err = db.Debug().Model(&p).Related(&p.Boxes, "Boxes")
+	err = db.Model(&p).Related(&p.Boxes, "Boxes")
 	return err.Error
 }
 
