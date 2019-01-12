@@ -623,7 +623,19 @@ func (p *Packinglist) AddPackinglistBox(b Box) error {
 func (p *Packinglist) GetPackinglistBoxes() ([]Box, error) {
 	var res []Box
 	err := db.Model(&p).Association("Boxes").Find(&res)
-	return res, err.Error
+	if err.Error != nil {
+		return res, err.Error
+	}
+	var res2 []Box
+	for _, b := range res {
+		var err2 error
+		b.Items, err2 = b.GetBoxItems()
+		if err2 != nil {
+			return res, err2
+		}
+		res2 = append(res2, b)
+	}
+	return res2, nil
 }
 
 func (p *Packinglist) RemovePackinglistBox(b Box) error {
