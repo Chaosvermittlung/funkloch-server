@@ -629,9 +629,17 @@ func (p *Packinglist) GetPackinglistBoxes() ([]Box, error) {
 	var res2 []Box
 	for _, b := range res {
 		var err2 error
-		b.Items, err2 = b.GetBoxItems()
+		ile, err2 := b.GetBoxItemsJoined()
 		if err2 != nil {
 			return res, err2
+		}
+		for _, ii := range ile {
+			var i Item
+			i.Code = ii.ItemCode
+			i.ItemID = ii.ItemID
+			i.Equipment.EquipmentID = ii.EquipmentID
+			i.Equipment.Name = ii.EquipmentName
+			b.Items = append(b.Items, i)
 		}
 		res2 = append(res2, b)
 	}
