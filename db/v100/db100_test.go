@@ -741,7 +741,7 @@ func TestPackinglistInsert(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	pl := Packinglist{Name: "Galaxy", EventID: 2}
+	pl := Packinglist{Name: "Galaxy", EventID: 1}
 	err = pl.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -784,7 +784,7 @@ func TestPackingListGetDetails(t *testing.T) {
 }
 
 func TestPackingListUpdate(t *testing.T) {
-	p := Packinglist{PackinglistID: 1, Name: "Focus", EventID: 2}
+	p := Packinglist{PackinglistID: 1, Name: "Focus", EventID: 1}
 	pn := Packinglist{PackinglistID: 1}
 	err := p.Update()
 	if err != nil {
