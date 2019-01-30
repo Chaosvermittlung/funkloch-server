@@ -421,7 +421,7 @@ func TestItemInsert(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	si := Item{BoxID: b.BoxID, EquipmentID: e.EquipmentID}
+	si := Item{BoxID: b.BoxID, EquipmentID: e.EquipmentID, Description: "Foobar"}
 	err = si.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -448,6 +448,9 @@ func TestItemGetDetails(t *testing.T) {
 	}
 	if si.Code != 2000000000015 {
 		t.Errorf("Expected Code = 2000000000015 but got %v", si.Code)
+	}
+	if si.Description != "Foobar" {
+		t.Errorf("Expected Description = Foobar but got %v", si.Description)
 	}
 }
 

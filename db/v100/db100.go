@@ -366,21 +366,23 @@ type Item struct {
 	EquipmentID int       `gorm:"not null"`
 	Equipment   Equipment `gorm:"not null"`
 	Code        int       `gorm:"type:integer(13)"`
-	Faults      []Fault   `gorm:"foreignkey:ItemID;association_foreignkey:ItemID"`
+	Description string
+	Faults      []Fault `gorm:"foreignkey:ItemID;association_foreignkey:ItemID"`
 }
 
 type ItemslistEntry struct {
-	ItemID         int
-	ItemCode       int
-	BoxID          int
-	BoxCode        int
-	BoxDescription string
-	StoreID        int
-	StoreName      string
-	StoreAddress   string
-	StoreManagerID int
-	EquipmentID    int
-	EquipmentName  string
+	ItemID          int
+	ItemCode        int
+	ItemDescription string
+	BoxID           int
+	BoxCode         int
+	BoxDescription  string
+	StoreID         int
+	StoreName       string
+	StoreAddress    string
+	StoreManagerID  int
+	EquipmentID     int
+	EquipmentName   string
 }
 
 func (i *Item) Insert() error {
@@ -428,6 +430,7 @@ func (i *Item) GetFullDetails() (ItemslistEntry, error) {
 	}
 	ile.ItemID = i.ItemID
 	ile.ItemCode = i.Code
+	ile.ItemDescription = i.Description
 	ile.BoxID = ble.BoxID
 	ile.BoxCode = ble.Code
 	ile.BoxDescription = ble.Description

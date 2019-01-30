@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	db100 "github.com/Chaosvermittlung/funkloch-server/db/v100"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )
@@ -14,6 +14,7 @@ func convertItemListEntryinItemResponse(s db100.ItemslistEntry) itemResponse {
 	var sir itemResponse
 	sir.Item.ItemID = s.ItemID
 	sir.Item.Code = s.ItemCode
+	sir.Item.Description = s.ItemDescription
 	sir.Item.EquipmentID = s.EquipmentID
 	sir.Box.BoxID = s.BoxID
 	sir.Box.Code = s.BoxCode
