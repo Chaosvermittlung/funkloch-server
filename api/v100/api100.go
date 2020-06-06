@@ -235,7 +235,6 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		apierror(w, r, err.Error(), 500, ERROR_NOTOKEN)
 		return
 	}
-	fmt.Println(tokenString)
 	ar := authResponse{tokenString}
 	j, err := json.Marshal(&ar)
 	if err != nil {
