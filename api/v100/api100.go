@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	db100 "github.com/Chaosvermittlung/funkloch-server/db/v100"
 	"github.com/Chaosvermittlung/funkloch-server/global"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
@@ -84,15 +84,14 @@ func getTokenfromRequest(r *http.Request) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	if strings.ToLower(m) != "token" {
-		return nil, errors.New("Token head missing")
+	if m != "Bearer" {
+		return nil, errors.New("Bearer head missing")
 	}
 
 	data, err := base64.StdEncoding.DecodeString(t)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("data", string(data))
 
 	token, err := jwt.Parse(string(data), func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
@@ -124,7 +123,7 @@ func getUserfromToken(token *jwt.Token) (db100.User, error) {
 func GetNewSubrouter(prefix string) (*mux.Router, *interpose.Middleware) {
 	m := interpose.New()
 	//m.Use(apiglobal.LoggerMiddleware())
-	//	m.Use(authMiddleware())
+	m.Use(authMiddleware())
 
 	r := mux.NewRouter().PathPrefix(prefix).Subrouter()
 	r = r.StrictSlash(true)
@@ -150,7 +149,7 @@ func getAuthorization(r *http.Request) (string, string, error) {
 	auth := r.Header.Get("Authorization")
 	s := strings.Split(auth, " ")
 	if len(s) < 2 {
-		return "", "", errors.New("Authorization header malformed. Expected \"Authorization token\" got " + auth)
+		return "", "", errors.New("Authorization header malformed. Expected \"Bearer <token>\" got " + auth)
 	}
 	return s[0], s[1], nil
 }
