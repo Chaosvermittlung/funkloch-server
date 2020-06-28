@@ -19,8 +19,8 @@ var Conf Config
 
 const saltSize = 32
 
-const storeItemPrefix = 200
-const boxPrefix = 202
+const storeItemPrefix = 1
+const boxPrefix = 3
 
 type DBConnection struct {
 	Driver     string
@@ -80,48 +80,22 @@ func GenerateSalt() (string, error) {
 	return string(buf), err
 }
 
-func CreateItemEAN(id int) string {
-	return CreateEAN13(storeItemPrefix, id)
+func CreateItemCode(id int) string {
+	return CreateCode(storeItemPrefix, id)
 }
 
-func CreateBoxEAN(id int) string {
-	return CreateEAN13(boxPrefix, id)
+func CreateBoxCode(id int) string {
+	return CreateCode(boxPrefix, id)
 }
 
-func CreateEAN13(prefix, id int) string {
-	res := strconv.Itoa(prefix)
+func CreateCode(prefix, id int) string {
+	pre := strconv.Itoa(prefix)
 	ids := strconv.Itoa(id)
-	zerocount := 12 - (len(res) + len(ids))
+	codelength := 5
+	zerocount := codelength - (len(pre) + len(ids))
 	for i := 0; i < zerocount; i++ {
-		res = res + "0"
+		pre = pre + "0"
 	}
-	res = res + ids
-	c := calculateCheckDigit(res)
-	return res + c
-}
-
-func calculateCheckDigit(num string) string {
-	sum := 0
-	multiplier := 1
-	for _, d := range num {
-		di, err := strconv.Atoi(string(d))
-		if err != nil {
-			return ""
-		}
-		sum += di * multiplier
-		if multiplier == 3 {
-			multiplier = 1
-		} else {
-			multiplier = 3
-		}
-	}
-	return mod(-sum, 10)
-}
-
-func mod(x int, y int) string {
-	result := x % y
-	if result < 0 {
-		result += y
-	}
-	return strconv.Itoa(result)
+	res := pre + ids
+	return res
 }

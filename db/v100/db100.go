@@ -269,7 +269,7 @@ type BoxlistEntry struct {
 
 func (b *Box) Insert() error {
 	err := db.Create(&b)
-	tmp, err2 := strconv.Atoi(global.CreateBoxEAN(b.BoxID))
+	tmp, err2 := strconv.Atoi(global.CreateBoxCode(b.BoxID))
 	if err2 != nil {
 		return err2
 	}
@@ -388,7 +388,7 @@ type ItemslistEntry struct {
 func (i *Item) Insert() error {
 	//Don't check this error, it breaks the code
 	err := db.Create(&i)
-	tmp, err2 := strconv.Atoi(global.CreateItemEAN(i.ItemID))
+	tmp, err2 := strconv.Atoi(global.CreateItemCode(i.ItemID))
 	if err2 != nil {
 		return err2
 	}
@@ -444,7 +444,7 @@ func (i *Item) GetFullDetails() (ItemslistEntry, error) {
 }
 
 func (i *Item) Update() error {
-	tmp, err2 := strconv.Atoi(global.CreateItemEAN(i.ItemID))
+	tmp, err2 := strconv.Atoi(global.CreateItemCode(i.ItemID))
 	if err2 != nil {
 		return err2
 	}
