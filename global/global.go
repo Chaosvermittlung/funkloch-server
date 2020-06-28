@@ -50,6 +50,7 @@ func Exists(path string) (bool, error) {
 type Config struct {
 	Port       int
 	Connection DBConnection
+	TokenKey   string
 }
 
 func (c *Config) load() error {

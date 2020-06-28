@@ -18,8 +18,6 @@ import (
 	jwt "gopkg.in/dgrijalva/jwt-go.v2"
 )
 
-const mySigningKey = "K3gQXQ4Xp87jERnQqYX3q6vyQZDrPZBYEDXVp6aPm78VD3S7wuxD2LB4VKX8S58sCEFwdybD"
-
 func GetSubrouter(prefix string) *interpose.Middleware {
 	middle100 := interpose.New()
 	//middle800.Use(apiglobal.LoggerMiddleware())
@@ -64,6 +62,7 @@ func notfoundHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func generateNewToken(un db100.User) (string, error) {
+	mySigningKey := global.Conf.TokenKey
 	token := jwt.New(jwt.SigningMethodHS256)
 	// Set some claims
 	token.Claims["iss"] = "funkloch"
@@ -79,6 +78,7 @@ func generateNewToken(un db100.User) (string, error) {
 }
 
 func getTokenfromRequest(r *http.Request) (*jwt.Token, error) {
+	mySigningKey := global.Conf.TokenKey
 	m, t, err := getAuthorization(r)
 	if err != nil {
 		return nil, err
