@@ -317,8 +317,8 @@ func TestBoxInsert(t *testing.T) {
 	if b.BoxID != 1 {
 		t.Errorf("Expected BoxID = 1 but got %v", b.BoxID)
 	}
-	if b.Code != 2020000000013 {
-		t.Errorf("Expected Code = 2020000000013 but got %v", b.Code)
+	if b.Code != 30001 {
+		t.Errorf("Expected Code = 30001 but got %v", b.Code)
 	}
 }
 
@@ -341,8 +341,8 @@ func TestBoxGetDetails(t *testing.T) {
 	if b.StoreID != 2 {
 		t.Error("Expected StoreID = 2 but got", b.StoreID)
 	}
-	if b.Code != 2020000000013 {
-		t.Error("Expected Code = 2020000000013 but got", b.StoreID)
+	if b.Code != 30001 {
+		t.Error("Expected Code = 30001 but got", b.BoxID)
 	}
 	if b.Description != "TestBox" {
 		t.Error("Expected Name = TestBox but got", b.Description)
@@ -429,8 +429,8 @@ func TestItemInsert(t *testing.T) {
 	if si.ItemID != 1 {
 		t.Errorf("Expected ItemID = 1 but got %v", si.ItemID)
 	}
-	if si.Code != 2000000000015 {
-		t.Errorf("Expected Code = 2000000000015 but got %v", si.Code)
+	if si.Code != 10001 {
+		t.Errorf("Expected Code = 10001 but got %v", si.Code)
 	}
 }
 
@@ -446,8 +446,8 @@ func TestItemGetDetails(t *testing.T) {
 	if si.EquipmentID != 2 {
 		t.Errorf("Expected EquipmentID = 2 but got %v", si.EquipmentID)
 	}
-	if si.Code != 2000000000015 {
-		t.Errorf("Expected Code = 2000000000015 but got %v", si.Code)
+	if si.Code != 10001 {
+		t.Errorf("Expected Code = 10001 but got %v", si.Code)
 	}
 	if si.Description != "Foobar" {
 		t.Errorf("Expected Description = Foobar but got %v", si.Description)
