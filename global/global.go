@@ -78,7 +78,7 @@ func GeneratePasswordHash(p, s string) (string, error) {
 func GenerateSalt() (string, error) {
 	buf := make([]byte, saltSize)
 	_, err := io.ReadFull(rand.Reader, buf)
-	return string(buf), err
+	return hex.EncodeToString(buf), err
 }
 
 func CreateItemCode(id int) string {
