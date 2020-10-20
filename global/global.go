@@ -67,7 +67,7 @@ func (c *Config) load() error {
 }
 
 func GeneratePasswordHash(p, s string) (string, error) {
-	dk, err := scrypt.Key([]byte(p), []byte(s), 16384, 12, 1, 32)
+	dk, err := scrypt.Key([]byte(p), []byte(s), 32768, 8, 1, 32)
 	if err != nil {
 		return "", err
 	}
