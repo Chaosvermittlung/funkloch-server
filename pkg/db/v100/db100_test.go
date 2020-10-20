@@ -8,7 +8,7 @@ import (
 
 	"time"
 
-	"github.com/Chaosvermittlung/funkloch-server/global"
+	"github.com/Chaosvermittlung/funkloch-server/internal/global"
 )
 
 func TestMain(m *testing.M) {
