@@ -28,6 +28,7 @@ func convertBoxListEntryinBoxResponse(b db100.BoxlistEntry) boxResponse {
 	br.Box.BoxID = b.BoxID
 	br.Box.Code = b.Code
 	br.Box.Description = b.Description
+	br.Box.Weight = b.Weight
 	br.Store.StoreID = b.StoreID
 	br.Store.Adress = b.Adress
 	br.Store.ManagerID = b.ManagerID
