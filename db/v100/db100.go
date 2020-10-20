@@ -20,6 +20,16 @@ func Initialisation(dbc *global.DBConnection) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	db.AutoMigrate(&User{})
+	db.AutoMigrate(&Store{})
+	db.AutoMigrate(&Equipment{})
+	db.AutoMigrate(&Box{})
+	db.AutoMigrate(&Item{})
+	db.AutoMigrate(&Event{})
+	db.AutoMigrate(&Packinglist{})
+	db.AutoMigrate(&Participant{})
+	db.AutoMigrate(&Wishlist{})
+	db.AutoMigrate(&Fault{})
 	if !cont {
 		initDB()
 	}
@@ -44,17 +54,6 @@ func checkDBExists(dbc *global.DBConnection) bool {
 func initDB() {
 	//db.LogMode(true)
 	log.Println("Creating DB")
-	db.AutoMigrate(&User{})
-	db.AutoMigrate(&Store{})
-	db.AutoMigrate(&Equipment{})
-	db.AutoMigrate(&Box{})
-	db.AutoMigrate(&Item{})
-	db.AutoMigrate(&Event{})
-	db.AutoMigrate(&Packinglist{})
-	db.AutoMigrate(&Participant{})
-	db.AutoMigrate(&Wishlist{})
-	db.AutoMigrate(&Fault{})
-
 	var u User
 	u.Username = "admin"
 	u.Password = "admin"
@@ -252,12 +251,14 @@ type Box struct {
 	Items       []Item `gorm:"foreignkey:BoxID;association_foreignkey:BoxID"`
 	Code        int    `gorm:"type:integer(13)"`
 	Description string `gorm:"not null"`
+	Weight      int    `gorm:"not null;default:0"`
 }
 
 type BoxlistEntry struct {
 	BoxID       int
 	Code        int
 	Description string
+	Weight      int
 	StoreID     int
 	Name        string
 	Adress      string
@@ -297,7 +298,7 @@ func (b *Box) GetDetails() error {
 func (b *Box) GetFullDetails() (BoxlistEntry, error) {
 	var ble BoxlistEntry
 	err := db.Table("Boxes").
-		Select("Boxes.box_id, Boxes.code, Boxes.description, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Users.Username, Users.Email, Users.Right").
+		Select("Boxes.box_id, Boxes.code, Boxes.description, Boxes.Weight, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Users.Username, Users.Email, Users.Right").
 		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
 		Joins("left join Users on Stores.Manager_id = Users.User_id").
 		Where("Boxes.box_id = ?", b.BoxID).
@@ -324,7 +325,7 @@ func (b *Box) GetBoxItems() ([]Item, error) {
 func GetBoxesJoined() ([]BoxlistEntry, error) {
 	var ble []BoxlistEntry
 	err := db.Table("Boxes").
-		Select("Boxes.box_id, Boxes.code, Boxes.description, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Users.Username, Users.Email, Users.Right").
+		Select("Boxes.box_id, Boxes.code, Boxes.description, Boxes.Weight, Stores.store_id, Stores.name, Stores.adress, Stores.manager_id, Users.Username, Users.Email, Users.Right").
 		Joins("left join Stores on Boxes.Store_Id = Stores.Store_Id").
 		Joins("left join Users on Stores.Manager_id = Users.User_id").
 		Scan(&ble)
@@ -377,6 +378,7 @@ type ItemslistEntry struct {
 	BoxID           int
 	BoxCode         int
 	BoxDescription  string
+	BoxWeight       int
 	StoreID         int
 	StoreName       string
 	StoreAddress    string
@@ -434,6 +436,7 @@ func (i *Item) GetFullDetails() (ItemslistEntry, error) {
 	ile.BoxID = ble.BoxID
 	ile.BoxCode = ble.Code
 	ile.BoxDescription = ble.Description
+	ile.BoxWeight = ble.Weight
 	ile.StoreID = ble.StoreID
 	ile.StoreAddress = ble.Adress
 	ile.StoreManagerID = ble.ManagerID
@@ -576,6 +579,7 @@ type Packinglist struct {
 	EventID       int    `gorm:"foreignkey:EventID;not null"`
 	Event         Event  `gorm:"not null"`
 	Boxes         []Box  `gorm:"many2many:packinglist_boxes;"`
+	Weight        int    `gorm:"not null;default:0"`
 }
 
 func (p *Packinglist) Insert() error {
@@ -620,7 +624,10 @@ func (p *Packinglist) Update() error {
 
 func (p *Packinglist) AddPackinglistBox(b Box) error {
 	err := db.Model(&p).Association("Boxes").Append(&b)
-	return err.Error
+	if err.Error != nil {
+		return err.Error
+	}
+	return p.updateWeight()
 }
 
 func (p *Packinglist) GetPackinglistBoxes() ([]Box, error) {
@@ -649,9 +656,25 @@ func (p *Packinglist) GetPackinglistBoxes() ([]Box, error) {
 	return res2, nil
 }
 
+func (p *Packinglist) updateWeight() error {
+	err := p.GetDetails()
+	if err != nil {
+		return err
+	}
+	p.Weight = 0
+	for _, b := range p.Boxes {
+		p.Weight = p.Weight + b.Weight
+	}
+	err = p.Update()
+	return err
+}
+
 func (p *Packinglist) RemovePackinglistBox(b Box) error {
 	err := db.Model(&p).Association("Boxes").Delete(&b)
-	return err.Error
+	if err.Error != nil {
+		return err.Error
+	}
+	return p.updateWeight()
 }
 
 func (p *Packinglist) Delete() error {

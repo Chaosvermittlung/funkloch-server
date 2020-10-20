@@ -312,13 +312,19 @@ func TestBoxInsert(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	b := Box{StoreID: s.StoreID, Description: "TestBox"}
+	b := Box{StoreID: s.StoreID, Description: "TestBox", Weight: 5}
 	err = b.Insert()
 	if b.BoxID != 1 {
 		t.Errorf("Expected BoxID = 1 but got %v", b.BoxID)
 	}
 	if b.Code != 30001 {
 		t.Errorf("Expected Code = 30001 but got %v", b.Code)
+	}
+	if b.Description != "TestBox" {
+		t.Errorf("Expected Description = TestBox but got %v", b.Description)
+	}
+	if b.Weight != 5 {
+		t.Errorf("Expected Weight = 5 but got %v", b.Weight)
 	}
 }
 
@@ -347,10 +353,13 @@ func TestBoxGetDetails(t *testing.T) {
 	if b.Description != "TestBox" {
 		t.Error("Expected Name = TestBox but got", b.Description)
 	}
+	if b.Weight != 5 {
+		t.Errorf("Expected Weight = 5 but got %v", b.Weight)
+	}
 }
 
 func TestBoxUpdate(t *testing.T) {
-	b := Box{BoxID: 1, StoreID: 2, Description: "TestBox2"}
+	b := Box{BoxID: 1, StoreID: 2, Description: "TestBox2", Weight: 10}
 	bn := Box{BoxID: 1}
 	err := b.Update()
 	if err != nil {
@@ -362,6 +371,9 @@ func TestBoxUpdate(t *testing.T) {
 	}
 	if bn.Description != "TestBox2" {
 		t.Error("Expected Name = TestBox2 but got", bn.Description)
+	}
+	if b.Weight != 10 {
+		t.Errorf("Expected Weight = 10 but got %v", b.Weight)
 	}
 }
 
@@ -813,7 +825,7 @@ func TestPackinglistAddBox(t *testing.T) {
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
 	}
-	b := Box{StoreID: s.StoreID, Description: "TestBox2"}
+	b := Box{StoreID: s.StoreID, Description: "TestBox2", Weight: 5}
 	err = b.Insert()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -826,6 +838,16 @@ func TestPackinglistAddBox(t *testing.T) {
 	err = p.AddPackinglistBox(b)
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
+	}
+	err = p.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(p.Boxes) != 1 {
+		t.Errorf("Expected len(Boxes) = 1 but got %v", len(p.Boxes))
+	}
+	if p.Weight != 5 {
+		t.Errorf("Expected Weight = 5 but got %v", p.Weight)
 	}
 }
 
@@ -841,7 +863,7 @@ func TestPackinglistGetPackinglistBoxes(t *testing.T) {
 }
 
 func TestPackinglistRemovePackinglistBox(t *testing.T) {
-	b := Box{BoxID: 3}
+	b := Box{BoxID: 4}
 	err := b.GetDetails()
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
@@ -850,6 +872,16 @@ func TestPackinglistRemovePackinglistBox(t *testing.T) {
 	err = p.RemovePackinglistBox(b)
 	if err != nil {
 		t.Errorf("Expected no error but got %v", err)
+	}
+	err = p.GetDetails()
+	if err != nil {
+		t.Errorf("Expected no error but got %v", err)
+	}
+	if len(p.Boxes) > 0 {
+		t.Errorf("Expected len(Boxes) = 0 but got %v", len(p.Boxes))
+	}
+	if p.Weight != 0 {
+		t.Errorf("Expected Weight = 0 but got %v", p.Weight)
 	}
 }
 
