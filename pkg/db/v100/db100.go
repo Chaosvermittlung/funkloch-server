@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Chaosvermittlung/funkloch-server/global"
+	"github.com/Chaosvermittlung/funkloch-server/internal/global"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )

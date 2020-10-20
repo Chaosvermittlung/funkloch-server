@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Chaosvermittlung/funkloch-server/internal/global"
+	db100 "github.com/Chaosvermittlung/funkloch-server/pkg/db/v100"
 	"github.com/carbocation/interpose"
-	"github.com/Chaosvermittlung/funkloch-server/db/v100"
-	"github.com/Chaosvermittlung/funkloch-server/global"
 	"github.com/gorilla/mux"
 )
 

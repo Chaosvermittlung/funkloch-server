@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Chaosvermittlung/funkloch-server/api/global"
-	"github.com/Chaosvermittlung/funkloch-server/api/v100"
-	"github.com/Chaosvermittlung/funkloch-server/db/v100"
-	"github.com/Chaosvermittlung/funkloch-server/global"
+	"github.com/Chaosvermittlung/funkloch-server/internal/global"
+	apiglobal "github.com/Chaosvermittlung/funkloch-server/pkg/api/global"
+	api100 "github.com/Chaosvermittlung/funkloch-server/pkg/api/v100"
+	db100 "github.com/Chaosvermittlung/funkloch-server/pkg/db/v100"
 
 	"github.com/gorilla/mux"
 )

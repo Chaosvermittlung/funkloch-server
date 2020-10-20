@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	db100 "github.com/Chaosvermittlung/funkloch-server/db/v100"
-	"github.com/Chaosvermittlung/funkloch-server/global"
+	"github.com/Chaosvermittlung/funkloch-server/internal/global"
+	db100 "github.com/Chaosvermittlung/funkloch-server/pkg/db/v100"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 	jwt "gopkg.in/dgrijalva/jwt-go.v2"

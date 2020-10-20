@@ -6,7 +6,7 @@ import (
 
 	"strconv"
 
-	"github.com/Chaosvermittlung/funkloch-server/db/v100"
+	db100 "github.com/Chaosvermittlung/funkloch-server/pkg/db/v100"
 	"github.com/carbocation/interpose"
 	"github.com/gorilla/mux"
 )

@@ -8,9 +8,9 @@ install:
 - go get github.com/mattn/go-sqlite3
 - go get gopkg.in/dgrijalva/jwt-go.v2
 - go get golang.org/x/crypto/scrypt
-- go get github.com/Chaosvermittlung/funkloch-server/api/global
-- go get github.com/Chaosvermittlung/funkloch-server/api/v100
-- go get github.com/Chaosvermittlung/funkloch-server/db/v100
+- go get github.com/Chaosvermittlung/funkloch-server/pkg/api/global
+- go get github.com/Chaosvermittlung/funkloch-server/pkg/api/v100
+- go get github.com/Chaosvermittlung/funkloch-server/pkg/db/v100
 notifications:
   email: false
   slack:
