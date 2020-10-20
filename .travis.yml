@@ -2,15 +2,7 @@ language: go
 go:
 - master
 install:
-- go get github.com/carbocation/interpose
-- go get github.com/gorilla/mux
-- go get github.com/jmoiron/sqlx
-- go get github.com/mattn/go-sqlite3
-- go get gopkg.in/dgrijalva/jwt-go.v2
-- go get golang.org/x/crypto/scrypt
-- go get github.com/Chaosvermittlung/funkloch-server/pkg/api/global
-- go get github.com/Chaosvermittlung/funkloch-server/pkg/api/v100
-- go get github.com/Chaosvermittlung/funkloch-server/pkg/db/v100
+- go mod download
 notifications:
   email: false
   slack:
