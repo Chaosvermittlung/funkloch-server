@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -14,9 +13,16 @@ import (
 	"github.com/Chaosvermittlung/funkloch-server/internal/global"
 	db100 "github.com/Chaosvermittlung/funkloch-server/pkg/db/v100"
 	"github.com/carbocation/interpose"
+	jwt "github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
-	jwt "gopkg.in/dgrijalva/jwt-go.v2"
 )
+
+//Holds claims for JWT authentication
+type FunklochClaims struct {
+	User   int             `json:"user"`
+	Rights db100.UserRight `json:"rights"`
+	jwt.StandardClaims
+}
 
 func GetSubrouter(prefix string) *interpose.Middleware {
 	middle100 := interpose.New()
@@ -63,12 +69,18 @@ func notfoundHandler(w http.ResponseWriter, r *http.Request) {
 
 func generateNewToken(un db100.User) (string, error) {
 	mySigningKey := global.Conf.TokenKey
-	token := jwt.New(jwt.SigningMethodHS256)
 	// Set some claims
-	token.Claims["iss"] = "funkloch"
-	token.Claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-	token.Claims["user"] = un.UserID
-	token.Claims["rights"] = un.Right
+	claims := FunklochClaims{
+		un.UserID,
+		un.Right,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
+			IssuedAt:  time.Now().Unix(),
+			Issuer:    "funkloch",
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// Sign and get the complete encoded token as a string
 	tokenString, err := token.SignedString([]byte(mySigningKey))
 	if err != nil {
@@ -77,7 +89,7 @@ func generateNewToken(un db100.User) (string, error) {
 	return base64.StdEncoding.EncodeToString([]byte(tokenString)), err
 }
 
-func getTokenfromRequest(r *http.Request) (*jwt.Token, error) {
+func getTokenfromRequest(r *http.Request) (*FunklochClaims, error) {
 	mySigningKey := global.Conf.TokenKey
 	m, t, err := getAuthorization(r)
 	if err != nil {
@@ -85,7 +97,7 @@ func getTokenfromRequest(r *http.Request) (*jwt.Token, error) {
 	}
 
 	if m != "Bearer" {
-		return nil, errors.New("Bearer head missing")
+		return nil, errors.New("bearer head missing")
 	}
 
 	data, err := base64.StdEncoding.DecodeString(t)
@@ -93,28 +105,34 @@ func getTokenfromRequest(r *http.Request) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	token, err := jwt.Parse(string(data), func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
+	token, err := jwt.ParseWithClaims(string(data), &FunklochClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(mySigningKey), nil
-
 	})
 
-	return token, err
-}
-
-func getUserfromToken(token *jwt.Token) (db100.User, error) {
-	un := db100.User{}
-
-	ui, ok := token.Claims["user"].(float64)
-	if !ok {
-		return un, errors.New("No id")
+	if err != nil {
+		log.Println("Error parsing token: ", err)
+		return nil, err
 	}
 
-	uid := int(ui)
-	un.UserID = uid
+	claims, ok := token.Claims.(*FunklochClaims)
+
+	if !ok {
+		err := errors.New("wrong claim format")
+		log.Println(err)
+		return nil, err
+	}
+
+	if !token.Valid {
+		err := errors.New("token invalid")
+		log.Println(err)
+		return nil, err
+	}
+	return claims, err
+}
+
+func getUserfromToken(claims *FunklochClaims) (db100.User, error) {
+	un := db100.User{}
+	un.UserID = claims.User
 	un.GetDetails()
 
 	return un, nil
@@ -157,20 +175,12 @@ func getAuthorization(r *http.Request) (string, string, error) {
 func authMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token, err := getTokenfromRequest(r)
+			_, err := getTokenfromRequest(r)
 
-			if err == nil && token.Valid {
+			if err == nil {
 				next.ServeHTTP(w, r)
 			} else {
-				m := ""
-				if err != nil {
-					m = err.Error()
-					log.Println(err)
-				} else {
-					m = "Token invalid"
-					log.Println("Tolen invalid")
-				}
-				apierror(w, r, m, 401, ERROR_MALFORMEDAUTH)
+				apierror(w, r, "", 401, ERROR_MALFORMEDAUTH)
 			}
 		})
 	}
@@ -247,13 +257,13 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func authRefreshHandler(w http.ResponseWriter, r *http.Request) {
-	token, err := getTokenfromRequest(r)
+	claims, err := getTokenfromRequest(r)
 	if err != nil {
 		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
 		return
 	}
 
-	un, err := getUserfromToken(token)
+	un, err := getUserfromToken(claims)
 	if err != nil {
 		apierror(w, r, "Auth Request malformed", 401, ERROR_MALFORMEDAUTH)
 		return
@@ -277,12 +287,12 @@ func authRefreshHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func userhasrRight(r *http.Request, ri db100.UserRight) error {
-	token, err := getTokenfromRequest(r)
+	claims, err := getTokenfromRequest(r)
 	if err != nil {
 		return err
 	}
 
-	ou, err := getUserfromToken(token)
+	ou, err := getUserfromToken(claims)
 	if err != nil {
 		return err
 	}
